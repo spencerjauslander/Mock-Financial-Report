@@ -63,7 +63,7 @@ Model setup notes: two dimension tables (`Dim_Company`, `Dim_Year`) relate to ev
 
 **Ledger & Line** (`index.html`, repo root) — a standalone, single-file web app rebuilding all five Power BI pages as a self-contained HTML/JS app. No install, no server, no Power BI license required — open the file directly in any browser.
 
-**Live version:** [spencerjauslander.github.io/Mock-Financial-Report](https://spencerjauslander.github.io/Mock-Financial-Report/)
+**Live version:** [Bespoke App](https://spencerjauslander.github.io/Mock-Financial-Report/)
 
 
 
