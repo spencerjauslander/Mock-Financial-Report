@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ledger &amp; Line — Twelve-Company Financial Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0B0D10;
+    --panel: #14181D;
+    --panel-2: #191E24;
+    --border: #262B33;
+    --border-soft: #1D222A;
+    --text: #E9E6DD;
+    --text-dim: #9AA0AA;
+    --text-faint: #5F6570;
+    --gold: #C9A227;
+    --gold-soft: rgba(201,162,39,0.14);
+    --teal: #45C7B8;
+    --red: #E0685E;
+    --blue: #6C93C7;
+    --grid-line: #21262E;
+    --radius: 3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:14px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:1400px;margin:0 auto;padding:0 28px 80px;}
+  .masthead{
+    padding:36px 0 22px;
+    border-bottom:1px solid var(--border);
+    display:flex;justify-content:space-between;align-items:flex-end;
+    flex-wrap:wrap;gap:18px;
+  }
+  .masthead h1{
+    font-family:'Spectral',serif;
+    font-weight:500;
+    font-size:30px;
+    margin:0 0 6px;
+    letter-spacing:0.2px;
+    color:var(--text);
+  }
+  .masthead .rule{
+    display:inline-block;width:34px;height:2px;background:var(--gold);
+    margin-right:12px;vertical-align:middle;position:relative;top:-4px;
+  }
+  .masthead p{margin:0;color:var(--text-dim);font-size:13px;max-width:560px;}
+  .masthead .meta{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;color:var(--text-faint);
+    text-align:right;line-height:1.7;
+  }
+  .masthead .meta b{color:var(--gold);font-weight:500;}
+
+  nav.tabs{
+    display:flex;gap:2px;margin-top:26px;border-bottom:1px solid var(--border);
+    overflow-x:auto;
+  }
+  nav.tabs button{
+    background:none;border:none;color:var(--text-dim);
+    font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;font-weight:500;
+    padding:12px 18px 13px;cursor:pointer;white-space:nowrap;
+    border-bottom:2px solid transparent;margin-bottom:-1px;
+    transition:color .15s,border-color .15s;
+  }
+  nav.tabs button:hover{color:var(--text);}
+  nav.tabs button.active{color:var(--gold);border-bottom-color:var(--gold);}
+
+  .filterbar{
+    display:flex;align-items:center;gap:22px;flex-wrap:wrap;
+    padding:16px 0;margin-bottom:6px;border-bottom:1px solid var(--border-soft);
+  }
+  .filtergroup{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .filtergroup .flabel{
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;
+    color:var(--text-faint);text-transform:uppercase;
+  }
+  .chip{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;
+    padding:4px 9px;border-radius:2px;border:1px solid var(--border);
+    background:var(--panel);color:var(--text-dim);cursor:pointer;
+    user-select:none;transition:all .12s;
+  }
+  .chip.on{background:var(--gold-soft);border-color:var(--gold);color:var(--gold);}
+  .chip:hover{border-color:var(--text-dim);}
+  .chip.all{color:var(--teal);}
+  .yearsel{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;
+    background:var(--panel);color:var(--text);border:1px solid var(--border);
+    border-radius:2px;padding:4px 6px;
+  }
+  .filter-hint{font-size:11px;color:var(--text-faint);margin-left:auto;}
+
+  .page{display:none;padding-top:22px;}
+  .page.active{display:block;}
+  .grid{display:grid;gap:18px;}
+  .grid.cols-2{grid-template-columns:1.3fr 1fr;}
+  .grid.cols-4{grid-template-columns:repeat(4,1fr);}
+  @media (max-width:900px){.grid.cols-2,.grid.cols-4{grid-template-columns:1fr;}}
+
+  .panel{
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:var(--radius);padding:20px 22px;
+  }
+  .panel h2{
+    font-family:'Spectral',serif;font-weight:500;font-size:17px;margin:0 0 3px;
+  }
+  .panel .sub{color:var(--text-faint);font-size:11.5px;margin:0 0 16px;}
+  .panel.tight{padding:16px 18px;}
+
+  .kpi{padding:18px 20px;}
+  .kpi .label{font-size:11px;color:var(--text-faint);font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;}
+  .kpi .value{font-family:'Spectral',serif;font-size:30px;color:var(--text);font-weight:500;}
+  .kpi .value.accent{color:var(--gold);}
+  .kpi .note{font-size:11.5px;color:var(--text-dim);margin-top:6px;}
+
+  svg text{font-family:'IBM Plex Mono',monospace;fill:var(--text-dim);}
+  .barlabel{font-family:'IBM Plex Sans',sans-serif;font-size:11.5px;fill:var(--text);}
+  .axislabel{font-size:10px;fill:var(--text-faint);}
+  .barval{font-family:'IBM Plex Mono',monospace;font-size:11px;fill:var(--text-dim);}
+
+  table.heat{border-collapse:collapse;width:100%;font-family:'IBM Plex Mono',monospace;font-size:11px;}
+  table.heat th{
+    color:var(--text-faint);font-weight:400;text-align:center;padding:4px 3px;
+    border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel);
+  }
+  table.heat th.rowhead{text-align:left;font-family:'IBM Plex Sans',sans-serif;color:var(--text-dim);}
+  table.heat td{text-align:center;padding:5px 3px;color:#0B0D10;font-weight:500;}
+  table.heat td.rowhead{
+    text-align:left;color:var(--text);font-family:'IBM Plex Sans',sans-serif;
+    font-size:12px;padding-right:10px;background:var(--panel)!important;font-weight:500;
+  }
+  table.heat td.empty{background:var(--panel-2)!important;color:var(--text-faint)!important;font-weight:400;}
+  .heatwrap{overflow-x:auto;}
+
+  table.diag{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12px;}
+  table.diag th{
+    text-align:right;color:var(--text-faint);font-weight:400;font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.03em;padding:6px 10px;border-bottom:1px solid var(--border);
+  }
+  table.diag th:first-child,table.diag td:first-child{text-align:left;font-family:'IBM Plex Sans',sans-serif;}
+  table.diag td{text-align:right;padding:7px 10px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  table.diag tr:hover td{background:var(--panel-2);}
+  table.diag tfoot td{font-weight:600;border-top:1px solid var(--border);border-bottom:none;color:var(--gold);}
+
+  .legend{display:flex;gap:16px;align-items:center;font-size:11px;color:var(--text-dim);margin-top:10px;flex-wrap:wrap;}
+  .legend .dot{display:inline-block;width:9px;height:9px;border-radius:1px;margin-right:5px;vertical-align:middle;}
+  .note-box{
+    font-size:12px;color:var(--text-dim);background:var(--panel-2);border-left:2px solid var(--gold);
+    padding:10px 14px;margin-top:14px;border-radius:0 2px 2px 0;
+  }
+  .note-box b{color:var(--gold);font-weight:500;}
+  .textcol{max-width:760px;}
+  .textcol h3{font-family:'Spectral',serif;font-size:15.5px;font-weight:600;margin:20px 0 6px;color:var(--gold);}
+  .textcol h3:first-child{margin-top:0;}
+  .textcol p{color:var(--text-dim);font-size:13px;margin:0 0 10px;}
+  .textcol strong{color:var(--text);}
+
+  .footer{
+    margin-top:50px;padding-top:18px;border-top:1px solid var(--border);
+    color:var(--text-faint);font-size:11px;font-family:'IBM Plex Mono',monospace;
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  }
+  .empty-state{color:var(--text-faint);font-size:12.5px;padding:30px 0;text-align:center;font-style:italic;}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+const RAW = {"companies":["AAPL","AIG","AMZN","BCS","GOOG","INTC","MCD","MSFT","NVDA","PCG","PYPL","SHLDQ"],"years":[2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022],"ebitda_excluded":["BCS"],"yoy":[{"company":"AAPL","year":2009,"revenue":42905.0,"yoy_growth":NaN},{"company":"AAPL","year":2010,"revenue":65225.0,"yoy_growth":0.5202},{"company":"AAPL","year":2011,"revenue":108249.0,"yoy_growth":0.6596},{"company":"AAPL","year":2012,"revenue":156508.0,"yoy_growth":0.4458},{"company":"AAPL","year":2013,"revenue":170910.0,"yoy_growth":0.092},{"company":"AAPL","year":2014,"revenue":182795.0,"yoy_growth":0.0695},{"company":"AAPL","year":2015,"revenue":233715.0,"yoy_growth":0.2786},{"company":"AAPL","year":2016,"revenue":215639.0,"yoy_growth":-0.0773},{"company":"AAPL","year":2017,"revenue":229234.0,"yoy_growth":0.063},{"company":"AAPL","year":2018,"revenue":265595.0,"yoy_growth":0.1586},{"company":"AAPL","year":2019,"revenue":260174.0,"yoy_growth":-0.0204},{"company":"AAPL","year":2020,"revenue":274515.0,"yoy_growth":0.0551},{"company":"AAPL","year":2021,"revenue":365817.0,"yoy_growth":0.3326},{"company":"AAPL","year":2022,"revenue":394328.0,"yoy_growth":0.0779},{"company":"AIG","year":2009,"revenue":75447.0,"yoy_growth":NaN},{"company":"AIG","year":2010,"revenue":72829.0,"yoy_growth":-0.0347},{"company":"AIG","year":2011,"revenue":65105.0,"yoy_growth":-0.1061},{"company":"AIG","year":2012,"revenue":71214.0,"yoy_growth":0.0938},{"company":"AIG","year":2013,"revenue":68874.0,"yoy_growth":-0.0329},{"company":"AIG","year":2014,"revenue":64406.0,"yoy_growth":-0.0649},{"company":"AIG","year":2015,"revenue":58327.0,"yoy_growth":-0.0944},{"company":"AIG","year":2016,"revenue":52367.0,"yoy_growth":-0.1022},{"company":"AIG","year":2017,"revenue":49520.0,"yoy_growth":-0.0544},{"company":"AIG","year":2018,"revenue":47389.0,"yoy_growth":-0.043},{"company":"AIG","year":2019,"revenue":49746.0,"yoy_growth":0.0497},{"company":"AIG","year":2020,"revenue":43736.0,"yoy_growth":-0.1208},{"company":"AIG","year":2021,"revenue":52057.0,"yoy_growth":0.1903},{"company":"AIG","year":2022,"revenue":56437.0,"yoy_growth":0.0841},{"company":"AMZN","year":2009,"revenue":24509.0,"yoy_growth":NaN},{"company":"AMZN","year":2010,"revenue":34204.0,"yoy_growth":0.3956},{"company":"AMZN","year":2011,"revenue":48077.0,"yoy_growth":0.4056},{"company":"AMZN","year":2012,"revenue":61093.0,"yoy_growth":0.2707},{"company":"AMZN","year":2013,"revenue":74452.0,"yoy_growth":0.2187},{"company":"AMZN","year":2014,"revenue":88988.0,"yoy_growth":0.1952},{"company":"AMZN","year":2015,"revenue":107006.0,"yoy_growth":0.2025},{"company":"AMZN","year":2016,"revenue":135987.0,"yoy_growth":0.2708},{"company":"AMZN","year":2017,"revenue":177866.0,"yoy_growth":0.308},{"company":"AMZN","year":2018,"revenue":232887.0,"yoy_growth":0.3093},{"company":"AMZN","year":2019,"revenue":280522.0,"yoy_growth":0.2045},{"company":"AMZN","year":2020,"revenue":386064.0,"yoy_growth":0.3762},{"company":"AMZN","year":2021,"revenue":469822.0,"yoy_growth":0.217},{"company":"AMZN","year":2022,"revenue":513983.0,"yoy_growth":0.094},{"company":"BCS","year":2009,"revenue":45992.04,"yoy_growth":NaN},{"company":"BCS","year":2010,"revenue":49030.07,"yoy_growth":0.0661},{"company":"BCS","year":2011,"revenue":48866.82,"yoy_growth":-0.0033},{"company":"BCS","year":2012,"revenue":46036.06,"yoy_growth":-0.0579},{"company":"BCS","year":2013,"revenue":43712.69,"yoy_growth":-0.0505},{"company":"BCS","year":2014,"revenue":41677.15,"yoy_growth":-0.0466},{"company":"BCS","year":2015,"revenue":38919.16,"yoy_growth":-0.0662},{"company":"BCS","year":2016,"revenue":29072.54,"yoy_growth":-0.253},{"company":"BCS","year":2017,"revenue":27162.75,"yoy_growth":-0.0657},{"company":"BCS","year":2018,"revenue":28212.33,"yoy_growth":0.0386},{"company":"BCS","year":2019,"revenue":27621.9,"yoy_growth":-0.0209},{"company":"BCS","year":2020,"revenue":27947.54,"yoy_growth":0.0118},{"company":"BCS","year":2021,"revenue":30169.69,"yoy_growth":0.0795},{"company":"BCS","year":2022,"revenue":30868.08,"yoy_growth":0.0231},{"company":"GOOG","year":2009,"revenue":23651.0,"yoy_growth":NaN},{"company":"GOOG","year":2010,"revenue":29321.0,"yoy_growth":0.2397},{"company":"GOOG","year":2011,"revenue":37905.0,"yoy_growth":0.2928},{"company":"GOOG","year":2012,"revenue":46039.0,"yoy_growth":0.2146},{"company":"GOOG","year":2013,"revenue":55519.0,"yoy_growth":0.2059},{"company":"GOOG","year":2014,"revenue":66001.0,"yoy_growth":0.1888},{"company":"GOOG","year":2015,"revenue":74989.0,"yoy_growth":0.1362},{"company":"GOOG","year":2016,"revenue":90272.0,"yoy_growth":0.2038},{"company":"GOOG","year":2017,"revenue":110855.0,"yoy_growth":0.228},{"company":"GOOG","year":2018,"revenue":136819.0,"yoy_growth":0.2342},{"company":"GOOG","year":2019,"revenue":161857.0,"yoy_growth":0.183},{"company":"GOOG","year":2020,"revenue":182527.0,"yoy_growth":0.1277},{"company":"GOOG","year":2021,"revenue":257637.0,"yoy_growth":0.4115},{"company":"GOOG","year":2022,"revenue":282836.0,"yoy_growth":0.0978},{"company":"INTC","year":2009,"revenue":35127.0,"yoy_growth":NaN},{"company":"INTC","year":2010,"revenue":43623.0,"yoy_growth":0.2419},{"company":"INTC","year":2011,"revenue":53999.0,"yoy_growth":0.2379},{"company":"INTC","year":2012,"revenue":53341.0,"yoy_growth":-0.0122},{"company":"INTC","year":2013,"revenue":52708.0,"yoy_growth":-0.0119},{"company":"INTC","year":2014,"revenue":55870.0,"yoy_growth":0.06},{"company":"INTC","year":2015,"revenue":55355.0,"yoy_growth":-0.0092},{"company":"INTC","year":2016,"revenue":59387.0,"yoy_growth":0.0728},{"company":"INTC","year":2017,"revenue":62761.0,"yoy_growth":0.0568},{"company":"INTC","year":2018,"revenue":70848.0,"yoy_growth":0.1289},{"company":"INTC","year":2019,"revenue":71965.0,"yoy_growth":0.0158},{"company":"INTC","year":2020,"revenue":77867.0,"yoy_growth":0.082},{"company":"INTC","year":2021,"revenue":79024.0,"yoy_growth":0.0149},{"company":"INTC","year":2022,"revenue":63054.0,"yoy_growth":-0.2021},{"company":"MCD","year":2009,"revenue":22744.7,"yoy_growth":NaN},{"company":"MCD","year":2010,"revenue":24074.6,"yoy_growth":0.0585},{"company":"MCD","year":2011,"revenue":27006.0,"yoy_growth":0.1218},{"company":"MCD","year":2012,"revenue":27567.0,"yoy_growth":0.0208},{"company":"MCD","year":2013,"revenue":28105.7,"yoy_growth":0.0195},{"company":"MCD","year":2014,"revenue":27441.3,"yoy_growth":-0.0236},{"company":"MCD","year":2015,"revenue":25413.0,"yoy_growth":-0.0739},{"company":"MCD","year":2016,"revenue":24621.9,"yoy_growth":-0.0311},{"company":"MCD","year":2017,"revenue":22820.4,"yoy_growth":-0.0732},{"company":"MCD","year":2018,"revenue":21257.9,"yoy_growth":-0.0685},{"company":"MCD","year":2019,"revenue":21364.4,"yoy_growth":0.005},{"company":"MCD","year":2020,"revenue":19207.8,"yoy_growth":-0.1009},{"company":"MCD","year":2021,"revenue":23222.9,"yoy_growth":0.209},{"company":"MCD","year":2022,"revenue":23182.6,"yoy_growth":-0.0017},{"company":"MSFT","year":2009,"revenue":58437.0,"yoy_growth":NaN},{"company":"MSFT","year":2010,"revenue":62484.0,"yoy_growth":0.0693},{"company":"MSFT","year":2011,"revenue":69943.0,"yoy_growth":0.1194},{"company":"MSFT","year":2012,"revenue":73723.0,"yoy_growth":0.054},{"company":"MSFT","year":2013,"revenue":77849.0,"yoy_growth":0.056},{"company":"MSFT","year":2014,"revenue":86833.0,"yoy_growth":0.1154},{"company":"MSFT","year":2015,"revenue":93580.0,"yoy_growth":0.0777},{"company":"MSFT","year":2016,"revenue":91154.0,"yoy_growth":-0.0259},{"company":"MSFT","year":2017,"revenue":96571.0,"yoy_growth":0.0594},{"company":"MSFT","year":2018,"revenue":110360.0,"yoy_growth":0.1428},{"company":"MSFT","year":2019,"revenue":125843.0,"yoy_growth":0.1403},{"company":"MSFT","year":2020,"revenue":143015.0,"yoy_growth":0.1365},{"company":"MSFT","year":2021,"revenue":168088.0,"yoy_growth":0.1753},{"company":"MSFT","year":2022,"revenue":198270.0,"yoy_growth":0.1796},{"company":"NVDA","year":2009,"revenue":3424.859,"yoy_growth":NaN},{"company":"NVDA","year":2010,"revenue":3326.445,"yoy_growth":-0.0287},{"company":"NVDA","year":2011,"revenue":3543.309,"yoy_growth":0.0652},{"company":"NVDA","year":2012,"revenue":3997.93,"yoy_growth":0.1283},{"company":"NVDA","year":2013,"revenue":4280.159,"yoy_growth":0.0706},{"company":"NVDA","year":2014,"revenue":4130.0,"yoy_growth":-0.0351},{"company":"NVDA","year":2015,"revenue":4682.0,"yoy_growth":0.1337},{"company":"NVDA","year":2016,"revenue":5010.0,"yoy_growth":0.0701},{"company":"NVDA","year":2017,"revenue":6910.0,"yoy_growth":0.3792},{"company":"NVDA","year":2018,"revenue":9714.0,"yoy_growth":0.4058},{"company":"NVDA","year":2019,"revenue":11716.0,"yoy_growth":0.2061},{"company":"NVDA","year":2020,"revenue":10918.0,"yoy_growth":-0.0681},{"company":"NVDA","year":2021,"revenue":16675.0,"yoy_growth":0.5273},{"company":"NVDA","year":2022,"revenue":26914.0,"yoy_growth":0.614},{"company":"PCG","year":2009,"revenue":13399.0,"yoy_growth":NaN},{"company":"PCG","year":2010,"revenue":13841.0,"yoy_growth":0.033},{"company":"PCG","year":2011,"revenue":14956.0,"yoy_growth":0.0806},{"company":"PCG","year":2012,"revenue":15040.0,"yoy_growth":0.0056},{"company":"PCG","year":2013,"revenue":15598.0,"yoy_growth":0.0371},{"company":"PCG","year":2014,"revenue":17090.0,"yoy_growth":0.0957},{"company":"PCG","year":2015,"revenue":16833.0,"yoy_growth":-0.015},{"company":"PCG","year":2016,"revenue":17666.0,"yoy_growth":0.0495},{"company":"PCG","year":2017,"revenue":17135.0,"yoy_growth":-0.0301},{"company":"PCG","year":2018,"revenue":16759.0,"yoy_growth":-0.0219},{"company":"PCG","year":2019,"revenue":17129.0,"yoy_growth":0.0221},{"company":"PCG","year":2020,"revenue":18469.0,"yoy_growth":0.0782},{"company":"PCG","year":2021,"revenue":20642.0,"yoy_growth":0.1177},{"company":"PCG","year":2022,"revenue":21680.0,"yoy_growth":0.0503},{"company":"PYPL","year":2014,"revenue":8025.0,"yoy_growth":NaN},{"company":"PYPL","year":2015,"revenue":9248.0,"yoy_growth":0.1524},{"company":"PYPL","year":2016,"revenue":10842.0,"yoy_growth":0.1724},{"company":"PYPL","year":2017,"revenue":13094.0,"yoy_growth":0.2077},{"company":"PYPL","year":2018,"revenue":15451.0,"yoy_growth":0.18},{"company":"PYPL","year":2019,"revenue":17772.0,"yoy_growth":0.1502},{"company":"PYPL","year":2020,"revenue":21454.0,"yoy_growth":0.2072},{"company":"PYPL","year":2021,"revenue":25371.0,"yoy_growth":0.1826},{"company":"PYPL","year":2022,"revenue":27518.0,"yoy_growth":0.0846},{"company":"SHLDQ","year":2009,"revenue":46770.0,"yoy_growth":NaN},{"company":"SHLDQ","year":2010,"revenue":43360.0,"yoy_growth":-0.0729},{"company":"SHLDQ","year":2011,"revenue":42664.0,"yoy_growth":-0.0161},{"company":"SHLDQ","year":2012,"revenue":41567.0,"yoy_growth":-0.0257},{"company":"SHLDQ","year":2013,"revenue":39854.0,"yoy_growth":-0.0412},{"company":"SHLDQ","year":2014,"revenue":36188.0,"yoy_growth":-0.092},{"company":"SHLDQ","year":2015,"revenue":31198.0,"yoy_growth":-0.1379},{"company":"SHLDQ","year":2016,"revenue":25146.0,"yoy_growth":-0.194},{"company":"SHLDQ","year":2017,"revenue":22138.0,"yoy_growth":-0.1196},{"company":"SHLDQ","year":2018,"revenue":16702.0,"yoy_growth":-0.2456}],"prof":[{"company":"AIG","year":2009,"size_rank_inv":11,"profitability_rank_inv":1},{"company":"MSFT","year":2009,"size_rank_inv":10,"profitability_rank_inv":10},{"company":"SHLDQ","year":2009,"size_rank_inv":9,"profitability_rank_inv":3},{"company":"BCS","year":2009,"size_rank_inv":8,"profitability_rank_inv":6},{"company":"AAPL","year":2009,"size_rank_inv":7,"profitability_rank_inv":8},{"company":"INTC","year":2009,"size_rank_inv":6,"profitability_rank_inv":7},{"company":"AMZN","year":2009,"size_rank_inv":5,"profitability_rank_inv":4},{"company":"GOOG","year":2009,"size_rank_inv":4,"profitability_rank_inv":11},{"company":"MCD","year":2009,"size_rank_inv":3,"profitability_rank_inv":9},{"company":"PCG","year":2009,"size_rank_inv":2,"profitability_rank_inv":5},{"company":"NVDA","year":2009,"size_rank_inv":1,"profitability_rank_inv":2},{"company":"AIG","year":2010,"size_rank_inv":11,"profitability_rank_inv":3},{"company":"AAPL","year":2010,"size_rank_inv":10,"profitability_rank_inv":8},{"company":"MSFT","year":2010,"size_rank_inv":9,"profitability_rank_inv":11},{"company":"BCS","year":2010,"size_rank_inv":8,"profitability_rank_inv":6},{"company":"INTC","year":2010,"size_rank_inv":7,"profitability_rank_inv":9},{"company":"SHLDQ","year":2010,"size_rank_inv":6,"profitability_rank_inv":2},{"company":"AMZN","year":2010,"size_rank_inv":5,"profitability_rank_inv":4},{"company":"GOOG","year":2010,"size_rank_inv":4,"profitability_rank_inv":10},{"company":"MCD","year":2010,"size_rank_inv":3,"profitability_rank_inv":7},{"company":"PCG","year":2010,"size_rank_inv":2,"profitability_rank_inv":5},{"company":"NVDA","year":2010,"size_rank_inv":1,"profitability_rank_inv":1},{"company":"AAPL","year":2011,"size_rank_inv":11,"profitability_rank_inv":7},{"company":"MSFT","year":2011,"size_rank_inv":10,"profitability_rank_inv":11},{"company":"AIG","year":2011,"size_rank_inv":9,"profitability_rank_inv":10},{"company":"INTC","year":2011,"size_rank_inv":8,"profitability_rank_inv":8},{"company":"BCS","year":2011,"size_rank_inv":7,"profitability_rank_inv":5},{"company":"AMZN","year":2011,"size_rank_inv":6,"profitability_rank_inv":2},{"company":"SHLDQ","year":2011,"size_rank_inv":5,"profitability_rank_inv":1},{"company":"GOOG","year":2011,"size_rank_inv":4,"profitability_rank_inv":9},{"company":"MCD","year":2011,"size_rank_inv":3,"profitability_rank_inv":6},{"company":"PCG","year":2011,"size_rank_inv":2,"profitability_rank_inv":3},{"company":"NVDA","year":2011,"size_rank_inv":1,"profitability_rank_inv":4},{"company":"AAPL","year":2012,"size_rank_inv":11,"profitability_rank_inv":11},{"company":"MSFT","year":2012,"size_rank_inv":10,"profitability_rank_inv":9},{"company":"AIG","year":2012,"size_rank_inv":9,"profitability_rank_inv":4},{"company":"AMZN","year":2012,"size_rank_inv":8,"profitability_rank_inv":3},{"company":"INTC","year":2012,"size_rank_inv":7,"profitability_rank_inv":8},{"company":"GOOG","year":2012,"size_rank_inv":6,"profitability_rank_inv":10},{"company":"BCS","year":2012,"size_rank_inv":5,"profitability_rank_inv":2},{"company":"SHLDQ","year":2012,"size_rank_inv":4,"profitability_rank_inv":1},{"company":"MCD","year":2012,"size_rank_inv":3,"profitability_rank_inv":7},{"company":"PCG","year":2012,"size_rank_inv":2,"profitability_rank_inv":5},{"company":"NVDA","year":2012,"size_rank_inv":1,"profitability_rank_inv":6},{"company":"AAPL","year":2013,"size_rank_inv":11,"profitability_rank_inv":9},{"company":"MSFT","year":2013,"size_rank_inv":10,"profitability_rank_inv":11},{"company":"AMZN","year":2013,"size_rank_inv":9,"profitability_rank_inv":2},{"company":"AIG","year":2013,"size_rank_inv":8,"profitability_rank_inv":6},{"company":"GOOG","year":2013,"size_rank_inv":7,"profitability_rank_inv":10},{"company":"INTC","year":2013,"size_rank_inv":6,"profitability_rank_inv":7},{"company":"BCS","year":2013,"size_rank_inv":5,"profitability_rank_inv":3},{"company":"SHLDQ","year":2013,"size_rank_inv":4,"profitability_rank_inv":1},{"company":"MCD","year":2013,"size_rank_inv":3,"profitability_rank_inv":8},{"company":"PCG","year":2013,"size_rank_inv":2,"profitability_rank_inv":4},{"company":"NVDA","year":2013,"size_rank_inv":1,"profitability_rank_inv":5},{"company":"AAPL","year":2014,"size_rank_inv":12,"profitability_rank_inv":11},{"company":"AMZN","year":2014,"size_rank_inv":11,"profitability_rank_inv":3},{"company":"MSFT","year":2014,"size_rank_inv":10,"profitability_rank_inv":12},{"company":"GOOG","year":2014,"size_rank_inv":9,"profitability_rank_inv":10},{"company":"AIG","year":2014,"size_rank_inv":8,"profitability_rank_inv":7},{"company":"INTC","year":2014,"size_rank_inv":7,"profitability_rank_inv":9},{"company":"BCS","year":2014,"size_rank_inv":6,"profitability_rank_inv":2},{"company":"SHLDQ","year":2014,"size_rank_inv":5,"profitability_rank_inv":1},{"company":"MCD","year":2014,"size_rank_inv":4,"profitability_rank_inv":8},{"company":"PCG","year":2014,"size_rank_inv":3,"profitability_rank_inv":5},{"company":"PYPL","year":2014,"size_rank_inv":2,"profitability_rank_inv":4},{"company":"NVDA","year":2014,"size_rank_inv":1,"profitability_rank_inv":6},{"company":"AAPL","year":2015,"size_rank_inv":12,"profitability_rank_inv":12},{"company":"AMZN","year":2015,"size_rank_inv":11,"profitability_rank_inv":3},{"company":"MSFT","year":2015,"size_rank_inv":10,"profitability_rank_inv":6},{"company":"GOOG","year":2015,"size_rank_inv":9,"profitability_rank_inv":11},{"company":"AIG","year":2015,"size_rank_inv":8,"profitability_rank_inv":4},{"company":"INTC","year":2015,"size_rank_inv":7,"profitability_rank_inv":10},{"company":"BCS","year":2015,"size_rank_inv":6,"profitability_rank_inv":2},{"company":"SHLDQ","year":2015,"size_rank_inv":5,"profitability_rank_inv":1},{"company":"MCD","year":2015,"size_rank_inv":4,"profitability_rank_inv":9},{"company":"PCG","year":2015,"size_rank_inv":3,"profitability_rank_inv":5},{"company":"PYPL","year":2015,"size_rank_inv":2,"profitability_rank_inv":7},{"company":"NVDA","year":2015,"size_rank_inv":1,"profitability_rank_inv":8},{"company":"AAPL","year":2016,"size_rank_inv":12,"profitability_rank_inv":10},{"company":"AMZN","year":2016,"size_rank_inv":11,"profitability_rank_inv":3},{"company":"MSFT","year":2016,"size_rank_inv":10,"profitability_rank_inv":12},{"company":"GOOG","year":2016,"size_rank_inv":9,"profitability_rank_inv":11},{"company":"INTC","year":2016,"size_rank_inv":8,"profitability_rank_inv":8},{"company":"AIG","year":2016,"size_rank_inv":7,"profitability_rank_inv":2},{"company":"BCS","year":2016,"size_rank_inv":6,"profitability_rank_inv":5},{"company":"SHLDQ","year":2016,"size_rank_inv":5,"profitability_rank_inv":1},{"company":"MCD","year":2016,"size_rank_inv":4,"profitability_rank_inv":9},{"company":"PCG","year":2016,"size_rank_inv":3,"profitability_rank_inv":4},{"company":"PYPL","year":2016,"size_rank_inv":2,"profitability_rank_inv":7},{"company":"NVDA","year":2016,"size_rank_inv":1,"profitability_rank_inv":6},{"company":"AAPL","year":2017,"size_rank_inv":12,"profitability_rank_inv":9},{"company":"AMZN","year":2017,"size_rank_inv":11,"profitability_rank_inv":4},{"company":"GOOG","year":2017,"size_rank_inv":10,"profitability_rank_inv":6},{"company":"MSFT","year":2017,"size_rank_inv":9,"profitability_rank_inv":12},{"company":"INTC","year":2017,"size_rank_inv":8,"profitability_rank_inv":8},{"company":"AIG","year":2017,"size_rank_inv":7,"profitability_rank_inv":1},{"company":"BCS","year":2017,"size_rank_inv":6,"profitability_rank_inv":3},{"company":"MCD","year":2017,"size_rank_inv":5,"profitability_rank_inv":10},{"company":"SHLDQ","year":2017,"size_rank_inv":4,"profitability_rank_inv":2},{"company":"PCG","year":2017,"size_rank_inv":3,"profitability_rank_inv":5},{"company":"PYPL","year":2017,"size_rank_inv":2,"profitability_rank_inv":7},{"company":"NVDA","year":2017,"size_rank_inv":1,"profitability_rank_inv":11},{"company":"AAPL","year":2018,"size_rank_inv":12,"profitability_rank_inv":8},{"company":"AMZN","year":2018,"size_rank_inv":11,"profitability_rank_inv":4},{"company":"GOOG","year":2018,"size_rank_inv":10,"profitability_rank_inv":9},{"company":"MSFT","year":2018,"size_rank_inv":9,"profitability_rank_inv":7},{"company":"INTC","year":2018,"size_rank_inv":8,"profitability_rank_inv":11},{"company":"AIG","year":2018,"size_rank_inv":7,"profitability_rank_inv":3},{"company":"BCS","year":2018,"size_rank_inv":6,"profitability_rank_inv":5},{"company":"MCD","year":2018,"size_rank_inv":5,"profitability_rank_inv":10},{"company":"PCG","year":2018,"size_rank_inv":4,"profitability_rank_inv":1},{"company":"SHLDQ","year":2018,"size_rank_inv":3,"profitability_rank_inv":2},{"company":"PYPL","year":2018,"size_rank_inv":2,"profitability_rank_inv":6},{"company":"NVDA","year":2018,"size_rank_inv":1,"profitability_rank_inv":12},{"company":"AMZN","year":2019,"size_rank_inv":11,"profitability_rank_inv":2},{"company":"AAPL","year":2019,"size_rank_inv":10,"profitability_rank_inv":7},{"company":"GOOG","year":2019,"size_rank_inv":9,"profitability_rank_inv":6},{"company":"MSFT","year":2019,"size_rank_inv":8,"profitability_rank_inv":10},{"company":"INTC","year":2019,"size_rank_inv":7,"profitability_rank_inv":9},{"company":"AIG","year":2019,"size_rank_inv":6,"profitability_rank_inv":3},{"company":"BCS","year":2019,"size_rank_inv":5,"profitability_rank_inv":5},{"company":"MCD","year":2019,"size_rank_inv":4,"profitability_rank_inv":8},{"company":"PYPL","year":2019,"size_rank_inv":3,"profitability_rank_inv":4},{"company":"PCG","year":2019,"size_rank_inv":2,"profitability_rank_inv":1},{"company":"NVDA","year":2019,"size_rank_inv":1,"profitability_rank_inv":11},{"company":"AMZN","year":2020,"size_rank_inv":11,"profitability_rank_inv":3},{"company":"AAPL","year":2020,"size_rank_inv":10,"profitability_rank_inv":6},{"company":"GOOG","year":2020,"size_rank_inv":9,"profitability_rank_inv":7},{"company":"MSFT","year":2020,"size_rank_inv":8,"profitability_rank_inv":11},{"company":"INTC","year":2020,"size_rank_inv":7,"profitability_rank_inv":10},{"company":"AIG","year":2020,"size_rank_inv":6,"profitability_rank_inv":1},{"company":"BCS","year":2020,"size_rank_inv":5,"profitability_rank_inv":4},{"company":"PYPL","year":2020,"size_rank_inv":4,"profitability_rank_inv":5},{"company":"MCD","year":2020,"size_rank_inv":3,"profitability_rank_inv":8},{"company":"PCG","year":2020,"size_rank_inv":2,"profitability_rank_inv":2},{"company":"NVDA","year":2020,"size_rank_inv":1,"profitability_rank_inv":9},{"company":"AMZN","year":2021,"size_rank_inv":11,"profitability_rank_inv":2},{"company":"AAPL","year":2021,"size_rank_inv":10,"profitability_rank_inv":6},{"company":"GOOG","year":2021,"size_rank_inv":9,"profitability_rank_inv":9},{"company":"MSFT","year":2021,"size_rank_inv":8,"profitability_rank_inv":11},{"company":"INTC","year":2021,"size_rank_inv":7,"profitability_rank_inv":5},{"company":"AIG","year":2021,"size_rank_inv":6,"profitability_rank_inv":4},{"company":"BCS","year":2021,"size_rank_inv":5,"profitability_rank_inv":8},{"company":"PYPL","year":2021,"size_rank_inv":4,"profitability_rank_inv":3},{"company":"MCD","year":2021,"size_rank_inv":3,"profitability_rank_inv":10},{"company":"PCG","year":2021,"size_rank_inv":2,"profitability_rank_inv":1},{"company":"NVDA","year":2021,"size_rank_inv":1,"profitability_rank_inv":7},{"company":"AMZN","year":2022,"size_rank_inv":11,"profitability_rank_inv":1},{"company":"AAPL","year":2022,"size_rank_inv":10,"profitability_rank_inv":8},{"company":"GOOG","year":2022,"size_rank_inv":9,"profitability_rank_inv":7},{"company":"MSFT","year":2022,"size_rank_inv":8,"profitability_rank_inv":11},{"company":"INTC","year":2022,"size_rank_inv":7,"profitability_rank_inv":4},{"company":"AIG","year":2022,"size_rank_inv":6,"profitability_rank_inv":5},{"company":"BCS","year":2022,"size_rank_inv":5,"profitability_rank_inv":6},{"company":"PYPL","year":2022,"size_rank_inv":4,"profitability_rank_inv":3},{"company":"NVDA","year":2022,"size_rank_inv":3,"profitability_rank_inv":10},{"company":"MCD","year":2022,"size_rank_inv":2,"profitability_rank_inv":9},{"company":"PCG","year":2022,"size_rank_inv":1,"profitability_rank_inv":2}],"eff":[{"company":"MSFT","year":2009,"avg_rank":1.0},{"company":"MCD","year":2009,"avg_rank":3.0},{"company":"AAPL","year":2009,"avg_rank":2.3333},{"company":"BCS","year":2009,"avg_rank":6.6667},{"company":"GOOG","year":2009,"avg_rank":4.0},{"company":"AMZN","year":2009,"avg_rank":5.6667},{"company":"PCG","year":2009,"avg_rank":7.0},{"company":"INTC","year":2009,"avg_rank":6.3333},{"company":"SHLDQ","year":2009,"avg_rank":9.0},{"company":"NVDA","year":2009,"avg_rank":10.0},{"company":"AIG","year":2009,"avg_rank":11.0},{"company":"MSFT","year":2010,"avg_rank":1.0},{"company":"MCD","year":2010,"avg_rank":3.3333},{"company":"AIG","year":2010,"avg_rank":6.0},{"company":"AAPL","year":2010,"avg_rank":2.6667},{"company":"INTC","year":2010,"avg_rank":3.6667},{"company":"GOOG","year":2010,"avg_rank":5.3333},{"company":"AMZN","year":2010,"avg_rank":6.3333},{"company":"PCG","year":2010,"avg_rank":7.6667},{"company":"BCS","year":2010,"avg_rank":9.6667},{"company":"SHLDQ","year":2010,"avg_rank":9.3333},{"company":"NVDA","year":2010,"avg_rank":11.0},{"company":"MSFT","year":2011,"avg_rank":1.6667},{"company":"MCD","year":2011,"avg_rank":3.3333},{"company":"AAPL","year":2011,"avg_rank":1.6667},{"company":"INTC","year":2011,"avg_rank":3.3333},{"company":"AIG","year":2011,"avg_rank":6.0},{"company":"GOOG","year":2011,"avg_rank":5.3333},{"company":"AMZN","year":2011,"avg_rank":7.6667},{"company":"NVDA","year":2011,"avg_rank":7.0},{"company":"PCG","year":2011,"avg_rank":9.0},{"company":"BCS","year":2011,"avg_rank":10.3333},{"company":"SHLDQ","year":2011,"avg_rank":10.6667},{"company":"MCD","year":2012,"avg_rank":2.0},{"company":"AAPL","year":2012,"avg_rank":1.3333},{"company":"MSFT","year":2012,"avg_rank":2.6667},{"company":"INTC","year":2012,"avg_rank":4.0},{"company":"GOOG","year":2012,"avg_rank":5.0},{"company":"NVDA","year":2012,"avg_rank":6.0},{"company":"PCG","year":2012,"avg_rank":7.0},{"company":"AIG","year":2012,"avg_rank":8.0},{"company":"BCS","year":2012,"avg_rank":9.0},{"company":"AMZN","year":2012,"avg_rank":10.0},{"company":"SHLDQ","year":2012,"avg_rank":11.0},{"company":"MCD","year":2013,"avg_rank":2.3333},{"company":"AAPL","year":2013,"avg_rank":1.3333},{"company":"MSFT","year":2013,"avg_rank":2.3333},{"company":"INTC","year":2013,"avg_rank":4.6667},{"company":"GOOG","year":2013,"avg_rank":4.3333},{"company":"NVDA","year":2013,"avg_rank":6.0},{"company":"AIG","year":2013,"avg_rank":7.0},{"company":"PCG","year":2013,"avg_rank":8.0},{"company":"AMZN","year":2013,"avg_rank":9.0},{"company":"BCS","year":2013,"avg_rank":10.0},{"company":"SHLDQ","year":2013,"avg_rank":11.0},{"company":"MCD","year":2014,"avg_rank":2.3333},{"company":"AAPL","year":2014,"avg_rank":1.3333},{"company":"MSFT","year":2014,"avg_rank":2.6667},{"company":"INTC","year":2014,"avg_rank":3.6667},{"company":"GOOG","year":2014,"avg_rank":5.0},{"company":"NVDA","year":2014,"avg_rank":6.0},{"company":"PCG","year":2014,"avg_rank":7.6667},{"company":"AIG","year":2014,"avg_rank":8.0},{"company":"PYPL","year":2014,"avg_rank":8.3333},{"company":"BCS","year":2014,"avg_rank":10.0},{"company":"AMZN","year":2014,"avg_rank":11.0},{"company":"SHLDQ","year":2014,"avg_rank":12.0},{"company":"SHLDQ","year":2015,"avg_rank":8.3333},{"company":"MCD","year":2015,"avg_rank":2.0},{"company":"AAPL","year":2015,"avg_rank":1.6667},{"company":"INTC","year":2015,"avg_rank":3.3333},{"company":"MSFT","year":2015,"avg_rank":5.3333},{"company":"NVDA","year":2015,"avg_rank":5.6667},{"company":"GOOG","year":2015,"avg_rank":5.0},{"company":"PYPL","year":2015,"avg_rank":7.3333},{"company":"PCG","year":2015,"avg_rank":8.6667},{"company":"AMZN","year":2015,"avg_rank":9.0},{"company":"AIG","year":2015,"avg_rank":10.3333},{"company":"BCS","year":2015,"avg_rank":11.3333},{"company":"SHLDQ","year":2016,"avg_rank":8.3333},{"company":"AAPL","year":2016,"avg_rank":1.6667},{"company":"MSFT","year":2016,"avg_rank":3.3333},{"company":"INTC","year":2016,"avg_rank":5.0},{"company":"GOOG","year":2016,"avg_rank":4.0},{"company":"NVDA","year":2016,"avg_rank":5.6667},{"company":"AMZN","year":2016,"avg_rank":7.6667},{"company":"PYPL","year":2016,"avg_rank":7.3333},{"company":"PCG","year":2016,"avg_rank":9.0},{"company":"BCS","year":2016,"avg_rank":10.0},{"company":"AIG","year":2016,"avg_rank":11.0},{"company":"MCD","year":2016,"avg_rank":5.0},{"company":"SHLDQ","year":2017,"avg_rank":4.6667},{"company":"AAPL","year":2017,"avg_rank":2.6667},{"company":"MSFT","year":2017,"avg_rank":4.0},{"company":"NVDA","year":2017,"avg_rank":2.3333},{"company":"INTC","year":2017,"avg_rank":5.6667},{"company":"PYPL","year":2017,"avg_rank":6.3333},{"company":"AMZN","year":2017,"avg_rank":8.3333},{"company":"PCG","year":2017,"avg_rank":8.6667},{"company":"GOOG","year":2017,"avg_rank":7.6667},{"company":"BCS","year":2017,"avg_rank":10.3333},{"company":"AIG","year":2017,"avg_rank":11.3333},{"company":"MCD","year":2017,"avg_rank":6.0},{"company":"AAPL","year":2018,"avg_rank":2.3333},{"company":"NVDA","year":2018,"avg_rank":1.3333},{"company":"INTC","year":2018,"avg_rank":3.6667},{"company":"AMZN","year":2018,"avg_rank":6.0},{"company":"MSFT","year":2018,"avg_rank":6.6667},{"company":"GOOG","year":2018,"avg_rank":5.6667},{"company":"PYPL","year":2018,"avg_rank":7.6667},{"company":"SHLDQ","year":2018,"avg_rank":7.3333},{"company":"BCS","year":2018,"avg_rank":9.3333},{"company":"AIG","year":2018,"avg_rank":10.3333},{"company":"PCG","year":2018,"avg_rank":11.6667},{"company":"MCD","year":2018,"avg_rank":6.0},{"company":"AAPL","year":2019,"avg_rank":1.6667},{"company":"NVDA","year":2019,"avg_rank":1.3333},{"company":"MSFT","year":2019,"avg_rank":3.6667},{"company":"INTC","year":2019,"avg_rank":4.0},{"company":"AMZN","year":2019,"avg_rank":6.3333},{"company":"GOOG","year":2019,"avg_rank":6.0},{"company":"PYPL","year":2019,"avg_rank":7.6667},{"company":"AIG","year":2019,"avg_rank":8.6667},{"company":"BCS","year":2019,"avg_rank":9.6667},{"company":"MCD","year":2019,"avg_rank":6.0},{"company":"PCG","year":2019,"avg_rank":11.0},{"company":"AAPL","year":2020,"avg_rank":1.0},{"company":"MSFT","year":2020,"avg_rank":2.3333},{"company":"INTC","year":2020,"avg_rank":3.6667},{"company":"NVDA","year":2020,"avg_rank":3.0},{"company":"AMZN","year":2020,"avg_rank":6.0},{"company":"PYPL","year":2020,"avg_rank":7.3333},{"company":"GOOG","year":2020,"avg_rank":6.3333},{"company":"BCS","year":2020,"avg_rank":8.6667},{"company":"PCG","year":2020,"avg_rank":10.0},{"company":"AIG","year":2020,"avg_rank":10.3333},{"company":"MCD","year":2020,"avg_rank":7.3333},{"company":"AAPL","year":2021,"avg_rank":1.0},{"company":"MSFT","year":2021,"avg_rank":2.3333},{"company":"GOOG","year":2021,"avg_rank":2.6667},{"company":"NVDA","year":2021,"avg_rank":4.3333},{"company":"AMZN","year":2021,"avg_rank":6.0},{"company":"INTC","year":2021,"avg_rank":6.3333},{"company":"PYPL","year":2021,"avg_rank":7.6667},{"company":"AIG","year":2021,"avg_rank":8.6667},{"company":"BCS","year":2021,"avg_rank":9.6667},{"company":"PCG","year":2021,"avg_rank":10.6667},{"company":"MCD","year":2021,"avg_rank":6.6667},{"company":"AAPL","year":2022,"avg_rank":1.0},{"company":"MSFT","year":2022,"avg_rank":2.3333},{"company":"NVDA","year":2022,"avg_rank":2.6667},{"company":"AIG","year":2022,"avg_rank":6.0},{"company":"GOOG","year":2022,"avg_rank":4.3333},{"company":"PYPL","year":2022,"avg_rank":6.6667},{"company":"BCS","year":2022,"avg_rank":9.0},{"company":"PCG","year":2022,"avg_rank":8.6667},{"company":"INTC","year":2022,"avg_rank":7.6667},{"company":"AMZN","year":2022,"avg_rank":10.6667},{"company":"MCD","year":2022,"avg_rank":7.0}],"gap":[{"company":"MSFT","year":2009,"rank_gap":0},{"company":"MCD","year":2009,"rank_gap":-2},{"company":"AAPL","year":2009,"rank_gap":1},{"company":"BCS","year":2009,"rank_gap":-4},{"company":"GOOG","year":2009,"rank_gap":2},{"company":"AMZN","year":2009,"rank_gap":0},{"company":"PCG","year":2009,"rank_gap":0},{"company":"INTC","year":2009,"rank_gap":3},{"company":"SHLDQ","year":2009,"rank_gap":0},{"company":"NVDA","year":2009,"rank_gap":0},{"company":"AIG","year":2009,"rank_gap":0},{"company":"MSFT","year":2010,"rank_gap":0},{"company":"MCD","year":2010,"rank_gap":-2},{"company":"AIG","year":2010,"rank_gap":-5},{"company":"AAPL","year":2010,"rank_gap":2},{"company":"INTC","year":2010,"rank_gap":2},{"company":"GOOG","year":2010,"rank_gap":1},{"company":"AMZN","year":2010,"rank_gap":1},{"company":"PCG","year":2010,"rank_gap":1},{"company":"BCS","year":2010,"rank_gap":-1},{"company":"SHLDQ","year":2010,"rank_gap":1},{"company":"NVDA","year":2010,"rank_gap":0},{"company":"MSFT","year":2011,"rank_gap":-1},{"company":"MCD","year":2011,"rank_gap":-2},{"company":"AAPL","year":2011,"rank_gap":2},{"company":"INTC","year":2011,"rank_gap":1},{"company":"AIG","year":2011,"rank_gap":-2},{"company":"GOOG","year":2011,"rank_gap":1},{"company":"AMZN","year":2011,"rank_gap":-1},{"company":"NVDA","year":2011,"rank_gap":2},{"company":"PCG","year":2011,"rank_gap":0},{"company":"BCS","year":2011,"rank_gap":-1},{"company":"SHLDQ","year":2011,"rank_gap":1},{"company":"MCD","year":2012,"rank_gap":-1},{"company":"AAPL","year":2012,"rank_gap":1},{"company":"MSFT","year":2012,"rank_gap":0},{"company":"INTC","year":2012,"rank_gap":0},{"company":"GOOG","year":2012,"rank_gap":0},{"company":"NVDA","year":2012,"rank_gap":0},{"company":"PCG","year":2012,"rank_gap":0},{"company":"AIG","year":2012,"rank_gap":0},{"company":"BCS","year":2012,"rank_gap":0},{"company":"AMZN","year":2012,"rank_gap":0},{"company":"SHLDQ","year":2012,"rank_gap":0},{"company":"MCD","year":2013,"rank_gap":-2},{"company":"AAPL","year":2013,"rank_gap":1},{"company":"MSFT","year":2013,"rank_gap":1},{"company":"INTC","year":2013,"rank_gap":-1},{"company":"GOOG","year":2013,"rank_gap":1},{"company":"NVDA","year":2013,"rank_gap":0},{"company":"AIG","year":2013,"rank_gap":0},{"company":"PCG","year":2013,"rank_gap":0},{"company":"AMZN","year":2013,"rank_gap":0},{"company":"BCS","year":2013,"rank_gap":0},{"company":"SHLDQ","year":2013,"rank_gap":0},{"company":"MCD","year":2014,"rank_gap":-1},{"company":"AAPL","year":2014,"rank_gap":1},{"company":"MSFT","year":2014,"rank_gap":0},{"company":"INTC","year":2014,"rank_gap":0},{"company":"GOOG","year":2014,"rank_gap":0},{"company":"NVDA","year":2014,"rank_gap":0},{"company":"PCG","year":2014,"rank_gap":0},{"company":"AIG","year":2014,"rank_gap":-1},{"company":"PYPL","year":2014,"rank_gap":1},{"company":"BCS","year":2014,"rank_gap":0},{"company":"AMZN","year":2014,"rank_gap":0},{"company":"SHLDQ","year":2014,"rank_gap":0},{"company":"SHLDQ","year":2015,"rank_gap":-11},{"company":"MCD","year":2015,"rank_gap":0},{"company":"AAPL","year":2015,"rank_gap":2},{"company":"INTC","year":2015,"rank_gap":1},{"company":"MSFT","year":2015,"rank_gap":-1},{"company":"NVDA","year":2015,"rank_gap":1},{"company":"GOOG","year":2015,"rank_gap":3},{"company":"PYPL","year":2015,"rank_gap":1},{"company":"PCG","year":2015,"rank_gap":1},{"company":"AMZN","year":2015,"rank_gap":1},{"company":"AIG","year":2015,"rank_gap":1},{"company":"BCS","year":2015,"rank_gap":1},{"company":"SHLDQ","year":2016,"rank_gap":-11},{"company":"AAPL","year":2016,"rank_gap":0},{"company":"MSFT","year":2016,"rank_gap":-1},{"company":"INTC","year":2016,"rank_gap":-1},{"company":"GOOG","year":2016,"rank_gap":2},{"company":"NVDA","year":2016,"rank_gap":0},{"company":"AMZN","year":2016,"rank_gap":-1},{"company":"PYPL","year":2016,"rank_gap":1},{"company":"PCG","year":2016,"rank_gap":0},{"company":"BCS","year":2016,"rank_gap":0},{"company":"AIG","year":2016,"rank_gap":0},{"company":"MCD","year":2016,"rank_gap":11},{"company":"SHLDQ","year":2017,"rank_gap":-11},{"company":"AAPL","year":2017,"rank_gap":-1},{"company":"MSFT","year":2017,"rank_gap":-1},{"company":"NVDA","year":2017,"rank_gap":3},{"company":"INTC","year":2017,"rank_gap":0},{"company":"PYPL","year":2017,"rank_gap":-1},{"company":"AMZN","year":2017,"rank_gap":-2},{"company":"PCG","year":2017,"rank_gap":0},{"company":"GOOG","year":2017,"rank_gap":3},{"company":"BCS","year":2017,"rank_gap":0},{"company":"AIG","year":2017,"rank_gap":0},{"company":"MCD","year":2017,"rank_gap":10},{"company":"AAPL","year":2018,"rank_gap":-3},{"company":"NVDA","year":2018,"rank_gap":1},{"company":"INTC","year":2018,"rank_gap":0},{"company":"AMZN","year":2018,"rank_gap":-3},{"company":"MSFT","year":2018,"rank_gap":-1},{"company":"GOOG","year":2018,"rank_gap":1},{"company":"PYPL","year":2018,"rank_gap":-1},{"company":"SHLDQ","year":2018,"rank_gap":-3},{"company":"BCS","year":2018,"rank_gap":0},{"company":"AIG","year":2018,"rank_gap":0},{"company":"PCG","year":2018,"rank_gap":-1},{"company":"MCD","year":2018,"rank_gap":10},{"company":"AAPL","year":2019,"rank_gap":-1},{"company":"NVDA","year":2019,"rank_gap":1},{"company":"MSFT","year":2019,"rank_gap":-1},{"company":"INTC","year":2019,"rank_gap":1},{"company":"AMZN","year":2019,"rank_gap":-2},{"company":"GOOG","year":2019,"rank_gap":0},{"company":"PYPL","year":2019,"rank_gap":-1},{"company":"AIG","year":2019,"rank_gap":-1},{"company":"BCS","year":2019,"rank_gap":-1},{"company":"MCD","year":2019,"rank_gap":5},{"company":"PCG","year":2019,"rank_gap":0},{"company":"AAPL","year":2020,"rank_gap":0},{"company":"MSFT","year":2020,"rank_gap":-1},{"company":"INTC","year":2020,"rank_gap":-1},{"company":"NVDA","year":2020,"rank_gap":2},{"company":"AMZN","year":2020,"rank_gap":-2},{"company":"PYPL","year":2020,"rank_gap":-2},{"company":"GOOG","year":2020,"rank_gap":2},{"company":"BCS","year":2020,"rank_gap":-1},{"company":"PCG","year":2020,"rank_gap":-2},{"company":"AIG","year":2020,"rank_gap":0},{"company":"MCD","year":2020,"rank_gap":5},{"company":"AAPL","year":2021,"rank_gap":0},{"company":"MSFT","year":2021,"rank_gap":-1},{"company":"GOOG","year":2021,"rank_gap":1},{"company":"NVDA","year":2021,"rank_gap":0},{"company":"AMZN","year":2021,"rank_gap":-2},{"company":"INTC","year":2021,"rank_gap":0},{"company":"PYPL","year":2021,"rank_gap":-1},{"company":"AIG","year":2021,"rank_gap":-1},{"company":"BCS","year":2021,"rank_gap":-1},{"company":"PCG","year":2021,"rank_gap":-1},{"company":"MCD","year":2021,"rank_gap":6},{"company":"AAPL","year":2022,"rank_gap":0},{"company":"MSFT","year":2022,"rank_gap":-1},{"company":"NVDA","year":2022,"rank_gap":1},{"company":"AIG","year":2022,"rank_gap":-4},{"company":"GOOG","year":2022,"rank_gap":1},{"company":"PYPL","year":2022,"rank_gap":-1},{"company":"BCS","year":2022,"rank_gap":-3},{"company":"PCG","year":2022,"rank_gap":-1},{"company":"INTC","year":2022,"rank_gap":3},{"company":"AMZN","year":2022,"rank_gap":-1},{"company":"MCD","year":2022,"rank_gap":6}],"debt":[{"company":"AAPL","year":2009,"debt_equity":0.0},{"company":"AAPL","year":2010,"debt_equity":0.0},{"company":"AAPL","year":2011,"debt_equity":0.0},{"company":"AAPL","year":2012,"debt_equity":0.0},{"company":"AAPL","year":2013,"debt_equity":0.1373},{"company":"AAPL","year":2014,"debt_equity":0.3164},{"company":"AAPL","year":2015,"debt_equity":0.539},{"company":"AAPL","year":2016,"debt_equity":0.6786},{"company":"AAPL","year":2017,"debt_equity":0.863},{"company":"AAPL","year":2018,"debt_equity":1.0685},{"company":"AAPL","year":2019,"debt_equity":1.194},{"company":"AAPL","year":2020,"debt_equity":1.7208},{"company":"AAPL","year":2021,"debt_equity":1.9768},{"company":"AAPL","year":2022,"debt_equity":2.3695},{"company":"AIG","year":2009,"debt_equity":1.1552},{"company":"AIG","year":2010,"debt_equity":0.7548},{"company":"AIG","year":2011,"debt_equity":0.7349},{"company":"AIG","year":2012,"debt_equity":0.4915},{"company":"AIG","year":2013,"debt_equity":0.4125},{"company":"AIG","year":2014,"debt_equity":0.291},{"company":"AIG","year":2015,"debt_equity":0.3242},{"company":"AIG","year":2016,"debt_equity":0.4022},{"company":"AIG","year":2017,"debt_equity":0.4815},{"company":"AIG","year":2018,"debt_equity":0.6027},{"company":"AIG","year":2019,"debt_equity":0.5243},{"company":"AIG","year":2020,"debt_equity":0.5586},{"company":"AIG","year":2021,"debt_equity":0.4377},{"company":"AIG","year":2022,"debt_equity":0.6435},{"company":"AMZN","year":2009,"debt_equity":0.2007},{"company":"AMZN","year":2010,"debt_equity":0.2274},{"company":"AMZN","year":2011,"debt_equity":0.0329},{"company":"AMZN","year":2012,"debt_equity":0.3765},{"company":"AMZN","year":2013,"debt_equity":0.3274},{"company":"AMZN","year":2014,"debt_equity":0.7695},{"company":"AMZN","year":2015,"debt_equity":0.6147},{"company":"AMZN","year":2016,"debt_equity":0.399},{"company":"AMZN","year":2017,"debt_equity":0.893},{"company":"AMZN","year":2018,"debt_equity":0.5395},{"company":"AMZN","year":2019,"debt_equity":0.3773},{"company":"AMZN","year":2020,"debt_equity":0.3406},{"company":"AMZN","year":2021,"debt_equity":0.3526},{"company":"AMZN","year":2022,"debt_equity":0.4598},{"company":"BCS","year":2009,"debt_equity":8.5152},{"company":"BCS","year":2010,"debt_equity":9.3328},{"company":"BCS","year":2011,"debt_equity":7.6045},{"company":"BCS","year":2012,"debt_equity":7.688},{"company":"BCS","year":2013,"debt_equity":6.6208},{"company":"BCS","year":2014,"debt_equity":5.0612},{"company":"BCS","year":2015,"debt_equity":3.6646},{"company":"BCS","year":2016,"debt_equity":3.5002},{"company":"BCS","year":2017,"debt_equity":5.2797},{"company":"BCS","year":2018,"debt_equity":5.8975},{"company":"BCS","year":2019,"debt_equity":5.3348},{"company":"BCS","year":2020,"debt_equity":6.0327},{"company":"BCS","year":2021,"debt_equity":6.3396},{"company":"BCS","year":2022,"debt_equity":7.1602},{"company":"GOOG","year":2009,"debt_equity":0.0},{"company":"GOOG","year":2010,"debt_equity":0.0749},{"company":"GOOG","year":2011,"debt_equity":0.0723},{"company":"GOOG","year":2012,"debt_equity":0.0772},{"company":"GOOG","year":2013,"debt_equity":0.0601},{"company":"GOOG","year":2014,"debt_equity":0.0504},{"company":"GOOG","year":2015,"debt_equity":0.0434},{"company":"GOOG","year":2016,"debt_equity":0.0283},{"company":"GOOG","year":2017,"debt_equity":0.026},{"company":"GOOG","year":2018,"debt_equity":0.0226},{"company":"GOOG","year":2019,"debt_equity":0.0226},{"company":"GOOG","year":2020,"debt_equity":0.0626},{"company":"GOOG","year":2021,"debt_equity":0.0589},{"company":"GOOG","year":2022,"debt_equity":0.0574},{"company":"INTC","year":2009,"debt_equity":0.0533},{"company":"INTC","year":2010,"debt_equity":0.0428},{"company":"INTC","year":2011,"debt_equity":0.1597},{"company":"INTC","year":2012,"debt_equity":0.2626},{"company":"INTC","year":2013,"debt_equity":0.2308},{"company":"INTC","year":2014,"debt_equity":0.2444},{"company":"INTC","year":2015,"debt_equity":0.3711},{"company":"INTC","year":2016,"debt_equity":0.3818},{"company":"INTC","year":2017,"debt_equity":0.3885},{"company":"INTC","year":2018,"debt_equity":0.3535},{"company":"INTC","year":2019,"debt_equity":0.3742},{"company":"INTC","year":2020,"debt_equity":0.4492},{"company":"INTC","year":2021,"debt_equity":0.3994},{"company":"INTC","year":2022,"debt_equity":0.4071},{"company":"MCD","year":2009,"debt_equity":0.7538},{"company":"MCD","year":2010,"debt_equity":0.7862},{"company":"MCD","year":2011,"debt_equity":0.8687},{"company":"MCD","year":2012,"debt_equity":0.8914},{"company":"MCD","year":2013,"debt_equity":0.8826},{"company":"MCD","year":2014,"debt_equity":1.162},{"company":"MCD","year":2015,"debt_equity":3.4033},{"company":"MCD","year":2016,"debt_equity":-11.775},{"company":"MCD","year":2017,"debt_equity":-9.0381},{"company":"MCD","year":2018,"debt_equity":-4.9654},{"company":"MCD","year":2019,"debt_equity":-4.1627},{"company":"MCD","year":2020,"debt_equity":-4.7848},{"company":"MCD","year":2021,"debt_equity":-7.7424},{"company":"MCD","year":2022,"debt_equity":-5.9805},{"company":"MSFT","year":2009,"debt_equity":0.1453},{"company":"MSFT","year":2010,"debt_equity":0.1286},{"company":"MSFT","year":2011,"debt_equity":0.2088},{"company":"MSFT","year":2012,"debt_equity":0.18},{"company":"MSFT","year":2013,"debt_equity":0.1976},{"company":"MSFT","year":2014,"debt_equity":0.2522},{"company":"MSFT","year":2015,"debt_equity":0.4407},{"company":"MSFT","year":2016,"debt_equity":0.7425},{"company":"MSFT","year":2017,"debt_equity":0.9827},{"company":"MSFT","year":2018,"debt_equity":0.9217},{"company":"MSFT","year":2019,"debt_equity":0.7053},{"company":"MSFT","year":2020,"debt_equity":0.5353},{"company":"MSFT","year":2021,"debt_equity":0.4095},{"company":"MSFT","year":2022,"debt_equity":0.2989},{"company":"MSFT","year":2023,"debt_equity":0.2291},{"company":"NVDA","year":2009,"debt_equity":0.0107},{"company":"NVDA","year":2010,"debt_equity":0.0092},{"company":"NVDA","year":2011,"debt_equity":0.0074},{"company":"NVDA","year":2012,"debt_equity":0.0052},{"company":"NVDA","year":2013,"debt_equity":0.0039},{"company":"NVDA","year":2014,"debt_equity":0.3083},{"company":"NVDA","year":2015,"debt_equity":0.3164},{"company":"NVDA","year":2016,"debt_equity":0.3379},{"company":"NVDA","year":2017,"debt_equity":0.4877},{"company":"NVDA","year":2018,"debt_equity":0.2677},{"company":"NVDA","year":2019,"debt_equity":0.2128},{"company":"NVDA","year":2020,"debt_equity":0.1631},{"company":"NVDA","year":2021,"debt_equity":0.4122},{"company":"NVDA","year":2022,"debt_equity":0.4113},{"company":"NVDA","year":2023,"debt_equity":0.4956},{"company":"PCG","year":2009,"debt_equity":1.2063},{"company":"PCG","year":2010,"debt_equity":1.1613},{"company":"PCG","year":2011,"debt_equity":1.1241},{"company":"PCG","year":2012,"debt_equity":1.0062},{"company":"PCG","year":2013,"debt_equity":1.0127},{"company":"PCG","year":2014,"debt_equity":0.9802},{"company":"PCG","year":2015,"debt_equity":1.0164},{"company":"PCG","year":2016,"debt_equity":1.0134},{"company":"PCG","year":2017,"debt_equity":0.9824},{"company":"PCG","year":2018,"debt_equity":1.7046},{"company":"PCG","year":2019,"debt_equity":0.0},{"company":"PCG","year":2020,"debt_equity":1.9227},{"company":"PCG","year":2021,"debt_equity":2.1152},{"company":"PCG","year":2022,"debt_equity":2.2563},{"company":"PYPL","year":2014,"debt_equity":0.1325},{"company":"PYPL","year":2015,"debt_equity":0.0},{"company":"PYPL","year":2016,"debt_equity":0.0},{"company":"PYPL","year":2017,"debt_equity":0.0625},{"company":"PYPL","year":2018,"debt_equity":0.1299},{"company":"PYPL","year":2019,"debt_equity":0.2933},{"company":"PYPL","year":2020,"debt_equity":0.4455},{"company":"PYPL","year":2021,"debt_equity":0.3705},{"company":"PYPL","year":2022,"debt_equity":0.5138},{"company":"SHLDQ","year":2009,"debt_equity":0.301},{"company":"SHLDQ","year":2010,"debt_equity":0.2655},{"company":"SHLDQ","year":2011,"debt_equity":0.3707},{"company":"SHLDQ","year":2012,"debt_equity":0.8047},{"company":"SHLDQ","year":2013,"debt_equity":0.9836},{"company":"SHLDQ","year":2014,"debt_equity":1.9464},{"company":"SHLDQ","year":2015,"debt_equity":-3.9958},{"company":"SHLDQ","year":2016,"debt_equity":-1.5215},{"company":"SHLDQ","year":2017,"debt_equity":-1.0887},{"company":"SHLDQ","year":2018,"debt_equity":-1.1099}],"eq":[{"company":"BCS","year":2013,"cf_to_ni_ratio":-46.5323},{"company":"BCS","year":2019,"cf_to_ni_ratio":-3.7553},{"company":"AIG","year":2019,"cf_to_ni_ratio":-0.5433},{"company":"AIG","year":2011,"cf_to_ni_ratio":-0.0041},{"company":"AIG","year":2022,"cf_to_ni_ratio":0.4106},{"company":"AIG","year":2013,"cf_to_ni_ratio":0.6456},{"company":"AIG","year":2014,"cf_to_ni_ratio":0.665},{"company":"AIG","year":2021,"cf_to_ni_ratio":0.6709},{"company":"NVDA","year":2019,"cf_to_ni_ratio":0.9039},{"company":"SHLDQ","year":2011,"cf_to_ni_ratio":0.9248},{"company":"NVDA","year":2022,"cf_to_ni_ratio":0.934},{"company":"NVDA","year":2017,"cf_to_ni_ratio":1.0036},{"company":"MCD","year":2017,"cf_to_ni_ratio":1.0691},{"company":"AIG","year":2012,"cf_to_ni_ratio":1.0692},{"company":"AAPL","year":2021,"cf_to_ni_ratio":1.0988},{"company":"NVDA","year":2018,"cf_to_ni_ratio":1.1493},{"company":"MSFT","year":2011,"cf_to_ni_ratio":1.166},{"company":"MCD","year":2018,"cf_to_ni_ratio":1.176},{"company":"MCD","year":2022,"cf_to_ni_ratio":1.1958},{"company":"GOOG","year":2021,"cf_to_ni_ratio":1.2054},{"company":"MSFT","year":2023,"cf_to_ni_ratio":1.2103},{"company":"MCD","year":2021,"cf_to_ni_ratio":1.2116},{"company":"AAPL","year":2012,"cf_to_ni_ratio":1.2186},{"company":"AAPL","year":2022,"cf_to_ni_ratio":1.2239},{"company":"MSFT","year":2022,"cf_to_ni_ratio":1.2241},{"company":"AAPL","year":2009,"cf_to_ni_ratio":1.2336},{"company":"MSFT","year":2021,"cf_to_ni_ratio":1.2525},{"company":"AAPL","year":2019,"cf_to_ni_ratio":1.2558},{"company":"MCD","year":2009,"cf_to_ni_ratio":1.2637},{"company":"MCD","year":2012,"cf_to_ni_ratio":1.2747},{"company":"MCD","year":2013,"cf_to_ni_ratio":1.2748},{"company":"MCD","year":2010,"cf_to_ni_ratio":1.2821},{"company":"MSFT","year":2010,"cf_to_ni_ratio":1.2832},{"company":"NVDA","year":2023,"cf_to_ni_ratio":1.2914},{"company":"MCD","year":2016,"cf_to_ni_ratio":1.293},{"company":"MCD","year":2011,"cf_to_ni_ratio":1.2993},{"company":"AAPL","year":2018,"cf_to_ni_ratio":1.3007},{"company":"GOOG","year":2010,"cf_to_ni_ratio":1.3029},{"company":"MSFT","year":2009,"cf_to_ni_ratio":1.3067},{"company":"AIG","year":2015,"cf_to_ni_ratio":1.3101},{"company":"MSFT","year":2013,"cf_to_ni_ratio":1.3188},{"company":"MCD","year":2020,"cf_to_ni_ratio":1.3244},{"company":"AAPL","year":2010,"cf_to_ni_ratio":1.327},{"company":"AAPL","year":2017,"cf_to_ni_ratio":1.3283},{"company":"MSFT","year":2019,"cf_to_ni_ratio":1.3299},{"company":"NVDA","year":2021,"cf_to_ni_ratio":1.344},{"company":"MCD","year":2019,"cf_to_ni_ratio":1.348},{"company":"MSFT","year":2020,"cf_to_ni_ratio":1.3702},{"company":"AMZN","year":2021,"cf_to_ni_ratio":1.3885},{"company":"PYPL","year":2021,"cf_to_ni_ratio":1.3905},{"company":"INTC","year":2018,"cf_to_ni_ratio":1.398},{"company":"AAPL","year":2020,"cf_to_ni_ratio":1.4052},{"company":"PYPL","year":2017,"cf_to_ni_ratio":1.41},{"company":"MCD","year":2014,"cf_to_ni_ratio":1.4146},{"company":"GOOG","year":2009,"cf_to_ni_ratio":1.4288},{"company":"NVDA","year":2015,"cf_to_ni_ratio":1.4358},{"company":"MCD","year":2015,"cf_to_ni_ratio":1.4437},{"company":"AAPL","year":2011,"cf_to_ni_ratio":1.4478},{"company":"AAPL","year":2013,"cf_to_ni_ratio":1.449},{"company":"AAPL","year":2016,"cf_to_ni_ratio":1.4497},{"company":"INTC","year":2010,"cf_to_ni_ratio":1.456},{"company":"NVDA","year":2013,"cf_to_ni_ratio":1.4651},{"company":"GOOG","year":2013,"cf_to_ni_ratio":1.4654},{"company":"MSFT","year":2014,"cf_to_ni_ratio":1.4724},{"company":"PYPL","year":2020,"cf_to_ni_ratio":1.48},{"company":"INTC","year":2021,"cf_to_ni_ratio":1.4826},{"company":"GOOG","year":2011,"cf_to_ni_ratio":1.4958},{"company":"AAPL","year":2014,"cf_to_ni_ratio":1.5113},{"company":"AAPL","year":2015,"cf_to_ni_ratio":1.522},{"company":"GOOG","year":2022,"cf_to_ni_ratio":1.5256},{"company":"GOOG","year":2012,"cf_to_ni_ratio":1.5478},{"company":"MSFT","year":2017,"cf_to_ni_ratio":1.55},{"company":"GOOG","year":2018,"cf_to_ni_ratio":1.5607},{"company":"NVDA","year":2012,"cf_to_ni_ratio":1.5646},{"company":"INTC","year":2019,"cf_to_ni_ratio":1.5747},{"company":"GOOG","year":2019,"cf_to_ni_ratio":1.5875},{"company":"GOOG","year":2020,"cf_to_ni_ratio":1.6172},{"company":"INTC","year":2011,"cf_to_ni_ratio":1.6198},{"company":"MSFT","year":2016,"cf_to_ni_ratio":1.6225},{"company":"GOOG","year":2014,"cf_to_ni_ratio":1.6287},{"company":"PYPL","year":2019,"cf_to_ni_ratio":1.6556},{"company":"INTC","year":2015,"cf_to_ni_ratio":1.6653},{"company":"GOOG","year":2015,"cf_to_ni_ratio":1.679},{"company":"NVDA","year":2020,"cf_to_ni_ratio":1.7028},{"company":"INTC","year":2012,"cf_to_ni_ratio":1.7159},{"company":"INTC","year":2020,"cf_to_ni_ratio":1.7161},{"company":"INTC","year":2014,"cf_to_ni_ratio":1.7445},{"company":"GOOG","year":2016,"cf_to_ni_ratio":1.8501},{"company":"MSFT","year":2012,"cf_to_ni_ratio":1.8628},{"company":"NVDA","year":2014,"cf_to_ni_ratio":1.8977},{"company":"NVDA","year":2016,"cf_to_ni_ratio":1.9137},{"company":"INTC","year":2022,"cf_to_ni_ratio":1.9258},{"company":"PCG","year":2022,"cf_to_ni_ratio":2.0672},{"company":"PYPL","year":2015,"cf_to_ni_ratio":2.0733},{"company":"INTC","year":2016,"cf_to_ni_ratio":2.114},{"company":"INTC","year":2013,"cf_to_ni_ratio":2.1597},{"company":"PYPL","year":2016,"cf_to_ni_ratio":2.2541},{"company":"INTC","year":2017,"cf_to_ni_ratio":2.3029},{"company":"PYPL","year":2022,"cf_to_ni_ratio":2.4031},{"company":"MSFT","year":2015,"cf_to_ni_ratio":2.4332},{"company":"PCG","year":2009,"cf_to_ni_ratio":2.491},{"company":"INTC","year":2009,"cf_to_ni_ratio":2.5566},{"company":"PCG","year":2014,"cf_to_ni_ratio":2.5696},{"company":"MSFT","year":2018,"cf_to_ni_ratio":2.6482},{"company":"PYPL","year":2018,"cf_to_ni_ratio":2.6641},{"company":"NVDA","year":2011,"cf_to_ni_ratio":2.6696},{"company":"PCG","year":2010,"cf_to_ni_ratio":2.9172},{"company":"GOOG","year":2017,"cf_to_ni_ratio":2.9293},{"company":"AMZN","year":2010,"cf_to_ni_ratio":3.0339},{"company":"AMZN","year":2018,"cf_to_ni_ratio":3.05},{"company":"AMZN","year":2020,"cf_to_ni_ratio":3.0971},{"company":"PCG","year":2016,"cf_to_ni_ratio":3.1651},{"company":"AMZN","year":2019,"cf_to_ni_ratio":3.3236},{"company":"PCG","year":2017,"cf_to_ni_ratio":3.6312},{"company":"AMZN","year":2009,"cf_to_ni_ratio":3.6508},{"company":"BCS","year":2010,"cf_to_ni_ratio":4.1077},{"company":"PCG","year":2013,"cf_to_ni_ratio":4.2101},{"company":"PCG","year":2015,"cf_to_ni_ratio":4.3249},{"company":"PCG","year":2011,"cf_to_ni_ratio":4.4301},{"company":"PYPL","year":2014,"cf_to_ni_ratio":5.2983},{"company":"PCG","year":2012,"cf_to_ni_ratio":5.9828},{"company":"BCS","year":2022,"cf_to_ni_ratio":6.0185},{"company":"AMZN","year":2017,"cf_to_ni_ratio":6.0551},{"company":"BCS","year":2018,"cf_to_ni_ratio":6.1004},{"company":"AMZN","year":2011,"cf_to_ni_ratio":6.1854},{"company":"SHLDQ","year":2010,"cf_to_ni_ratio":6.4128},{"company":"BCS","year":2016,"cf_to_ni_ratio":6.4455},{"company":"AMZN","year":2016,"cf_to_ni_ratio":7.2556},{"company":"BCS","year":2011,"cf_to_ni_ratio":7.3599},{"company":"BCS","year":2021,"cf_to_ni_ratio":7.6736},{"company":"AIG","year":2010,"cf_to_ni_ratio":8.1119},{"company":"BCS","year":2009,"cf_to_ni_ratio":11.918},{"company":"SHLDQ","year":2009,"cf_to_ni_ratio":18.717},{"company":"AMZN","year":2013,"cf_to_ni_ratio":19.9818},{"company":"AMZN","year":2015,"cf_to_ni_ratio":20.1997},{"company":"BCS","year":2020,"cf_to_ni_ratio":37.6835}],"ebitda":[{"company":"GOOG","year":2009,"ebitda_margin":41.5881},{"company":"MSFT","year":2009,"ebitda_margin":39.2303},{"company":"AIG","year":2009,"ebitda_margin":36.8007},{"company":"MCD","year":2009,"ebitda_margin":35.4245},{"company":"INTC","year":2009,"ebitda_margin":30.6402},{"company":"PCG","year":2009,"ebitda_margin":30.2336},{"company":"AAPL","year":2009,"ebitda_margin":29.0735},{"company":"AMZN","year":2009,"ebitda_margin":6.1488},{"company":"NVDA","year":2009,"ebitda_margin":3.338},{"company":"SHLDQ","year":2009,"ebitda_margin":2.7432},{"company":"INTC","year":2010,"ebitda_margin":46.3654},{"company":"MSFT","year":2010,"ebitda_margin":42.8446},{"company":"GOOG","year":2010,"ebitda_margin":40.1658},{"company":"MCD","year":2010,"ebitda_margin":36.3425},{"company":"PCG","year":2010,"ebitda_margin":30.4386},{"company":"AAPL","year":2010,"ebitda_margin":29.7616},{"company":"AIG","year":2010,"ebitda_margin":29.0626},{"company":"AMZN","year":2010,"ebitda_margin":5.7713},{"company":"SHLDQ","year":2010,"ebitda_margin":3.6001},{"company":"NVDA","year":2010,"ebitda_margin":2.9376},{"company":"INTC","year":2011,"ebitda_margin":43.5953},{"company":"MSFT","year":2011,"ebitda_margin":42.7877},{"company":"MCD","year":2011,"ebitda_margin":36.824},{"company":"GOOG","year":2011,"ebitda_margin":35.8607},{"company":"AAPL","year":2011,"ebitda_margin":32.8908},{"company":"PCG","year":2011,"ebitda_margin":27.7949},{"company":"AIG","year":2011,"ebitda_margin":23.3853},{"company":"NVDA","year":2011,"ebitda_margin":12.495},{"company":"AMZN","year":2011,"ebitda_margin":4.0456},{"company":"SHLDQ","year":2011,"ebitda_margin":3.0611},{"company":"MSFT","year":2012,"ebitda_margin":41.9448},{"company":"INTC","year":2012,"ebitda_margin":41.544},{"company":"AAPL","year":2012,"ebitda_margin":37.3898},{"company":"MCD","year":2012,"ebitda_margin":36.613},{"company":"GOOG","year":2012,"ebitda_margin":36.4821},{"company":"AIG","year":2012,"ebitda_margin":27.1393},{"company":"PCG","year":2012,"ebitda_margin":26.363},{"company":"NVDA","year":2012,"ebitda_margin":21.3236},{"company":"AMZN","year":2012,"ebitda_margin":4.6405},{"company":"SHLDQ","year":2012,"ebitda_margin":-1.5589},{"company":"MSFT","year":2013,"ebitda_margin":39.2028},{"company":"INTC","year":2013,"ebitda_margin":38.5577},{"company":"MCD","year":2013,"ebitda_margin":36.8231},{"company":"GOOG","year":2013,"ebitda_margin":34.8385},{"company":"AAPL","year":2013,"ebitda_margin":32.623},{"company":"PCG","year":2013,"ebitda_margin":24.6121},{"company":"AIG","year":2013,"ebitda_margin":24.5695},{"company":"NVDA","year":2013,"ebitda_margin":20.4309},{"company":"AMZN","year":2013,"ebitda_margin":5.3699},{"company":"SHLDQ","year":2013,"ebitda_margin":-0.0201},{"company":"INTC","year":2014,"ebitda_margin":42.7707},{"company":"MSFT","year":2014,"ebitda_margin":37.9706},{"company":"MCD","year":2014,"ebitda_margin":34.9608},{"company":"AAPL","year":2014,"ebitda_margin":33.0693},{"company":"GOOG","year":2014,"ebitda_margin":32.5374},{"company":"PCG","year":2014,"ebitda_margin":28.5723},{"company":"AIG","year":2014,"ebitda_margin":26.01},{"company":"PYPL","year":2014,"ebitda_margin":22.2305},{"company":"NVDA","year":2014,"ebitda_margin":17.9177},{"company":"AMZN","year":2014,"ebitda_margin":5.5333},{"company":"SHLDQ","year":2014,"ebitda_margin":-0.5389},{"company":"INTC","year":2015,"ebitda_margin":41.0315},{"company":"AAPL","year":2015,"ebitda_margin":35.2938},{"company":"MCD","year":2015,"ebitda_margin":34.2392},{"company":"MSFT","year":2015,"ebitda_margin":33.785},{"company":"GOOG","year":2015,"ebitda_margin":32.5688},{"company":"PCG","year":2015,"ebitda_margin":24.4757},{"company":"PYPL","year":2015,"ebitda_margin":22.3724},{"company":"NVDA","year":2015,"ebitda_margin":21.5079},{"company":"AIG","year":2015,"ebitda_margin":17.0727},{"company":"AMZN","year":2015,"ebitda_margin":7.9566},{"company":"SHLDQ","year":2015,"ebitda_margin":-2.8495},{"company":"MCD","year":2016,"ebitda_margin":37.6129},{"company":"MSFT","year":2016,"ebitda_margin":36.5645},{"company":"INTC","year":2016,"ebitda_margin":35.2316},{"company":"GOOG","year":2016,"ebitda_margin":33.0778},{"company":"AAPL","year":2016,"ebitda_margin":32.707},{"company":"PCG","year":2016,"ebitda_margin":27.369},{"company":"PYPL","year":2016,"ebitda_margin":21.306},{"company":"NVDA","year":2016,"ebitda_margin":19.4212},{"company":"AIG","year":2016,"ebitda_margin":9.1756},{"company":"AMZN","year":2016,"ebitda_margin":9.0465},{"company":"SHLDQ","year":2016,"ebitda_margin":-2.2668},{"company":"MCD","year":2017,"ebitda_margin":47.8348},{"company":"INTC","year":2017,"ebitda_margin":41.7122},{"company":"MSFT","year":2017,"ebitda_margin":39.1453},{"company":"PCG","year":2017,"ebitda_margin":33.6096},{"company":"AAPL","year":2017,"ebitda_margin":31.1913},{"company":"NVDA","year":2017,"ebitda_margin":30.6946},{"company":"GOOG","year":2017,"ebitda_margin":29.8525},{"company":"PYPL","year":2017,"ebitda_margin":22.3919},{"company":"AIG","year":2017,"ebitda_margin":12.9947},{"company":"AMZN","year":2017,"ebitda_margin":8.7617},{"company":"SHLDQ","year":2017,"ebitda_margin":-7.2726},{"company":"MCD","year":2018,"ebitda_margin":48.4742},{"company":"INTC","year":2018,"ebitda_margin":45.7331},{"company":"MSFT","year":2018,"ebitda_margin":41.0647},{"company":"NVDA","year":2018,"ebitda_margin":35.0937},{"company":"AAPL","year":2018,"ebitda_margin":30.7991},{"company":"GOOG","year":2018,"ebitda_margin":26.7207},{"company":"PYPL","year":2018,"ebitda_margin":19.2221},{"company":"AIG","year":2018,"ebitda_margin":14.554},{"company":"AMZN","year":2018,"ebitda_margin":11.9208},{"company":"SHLDQ","year":2018,"ebitda_margin":-0.3113},{"company":"PCG","year":2018,"ebitda_margin":-39.7637},{"company":"MCD","year":2019,"ebitda_margin":50.0257},{"company":"INTC","year":2019,"ebitda_margin":45.6625},{"company":"MSFT","year":2019,"ebitda_margin":43.42},{"company":"NVDA","year":2019,"ebitda_margin":34.7047},{"company":"AAPL","year":2019,"ebitda_margin":29.3946},{"company":"GOOG","year":2019,"ebitda_margin":28.4276},{"company":"AIG","year":2019,"ebitda_margin":23.7547},{"company":"PYPL","year":2019,"ebitda_margin":20.431},{"company":"AMZN","year":2019,"ebitda_margin":12.9509},{"company":"PCG","year":2019,"ebitda_margin":-40.049},{"company":"MCD","year":2020,"ebitda_margin":47.2485},{"company":"INTC","year":2020,"ebitda_margin":46.1261},{"company":"MSFT","year":2020,"ebitda_margin":45.9777},{"company":"GOOG","year":2020,"ebitda_margin":30.0892},{"company":"NVDA","year":2020,"ebitda_margin":29.5567},{"company":"PCG","year":2020,"ebitda_margin":28.2798},{"company":"AAPL","year":2020,"ebitda_margin":28.1748},{"company":"PYPL","year":2020,"ebitda_margin":20.8726},{"company":"AIG","year":2020,"ebitda_margin":15.5958},{"company":"AMZN","year":2020,"ebitda_margin":12.4536},{"company":"MCD","year":2021,"ebitda_margin":52.6381},{"company":"MSFT","year":2021,"ebitda_margin":48.5472},{"company":"INTC","year":2021,"ebitda_margin":39.5424},{"company":"GOOG","year":2021,"ebitda_margin":35.3812},{"company":"NVDA","year":2021,"ebitda_margin":33.7631},{"company":"AAPL","year":2021,"ebitda_margin":32.867},{"company":"AIG","year":2021,"ebitda_margin":29.5484},{"company":"PCG","year":2021,"ebitda_margin":25.608},{"company":"PYPL","year":2021,"ebitda_margin":21.7847},{"company":"AMZN","year":2021,"ebitda_margin":12.6244},{"company":"MSFT","year":2022,"ebitda_margin":49.3484},{"company":"MCD","year":2022,"ebitda_margin":48.4915},{"company":"NVDA","year":2022,"ebitda_margin":41.6698},{"company":"AIG","year":2022,"ebitda_margin":36.5718},{"company":"AAPL","year":2022,"ebitda_margin":33.1047},{"company":"GOOG","year":2022,"ebitda_margin":32.0928},{"company":"PCG","year":2022,"ebitda_margin":26.2592},{"company":"INTC","year":2022,"ebitda_margin":24.3743},{"company":"PYPL","year":2022,"ebitda_margin":18.7296},{"company":"AMZN","year":2022,"ebitda_margin":10.5391}],"val":[{"company":"SHLDQ","year":2009,"valuation_rank":1.0,"market_cap_to_ni":169.43},{"company":"AMZN","year":2009,"valuation_rank":2.0,"market_cap_to_ni":64.57},{"company":"GOOG","year":2009,"valuation_rank":3.0,"market_cap_to_ni":29.95},{"company":"INTC","year":2009,"valuation_rank":4.0,"market_cap_to_ni":25.78},{"company":"AAPL","year":2009,"valuation_rank":5.0,"market_cap_to_ni":23.05},{"company":"MSFT","year":2009,"valuation_rank":6.0,"market_cap_to_ni":18.58},{"company":"MCD","year":2009,"valuation_rank":7.0,"market_cap_to_ni":17.82},{"company":"PCG","year":2009,"valuation_rank":8.0,"market_cap_to_ni":15.38},{"company":"BCS","year":2009,"valuation_rank":9.0,"market_cap_to_ni":6.7},{"company":"AMZN","year":2010,"valuation_rank":1.0,"market_cap_to_ni":70.13},{"company":"SHLDQ","year":2010,"valuation_rank":2.0,"market_cap_to_ni":34.98},{"company":"GOOG","year":2010,"valuation_rank":3.0,"market_cap_to_ni":22.17},{"company":"AAPL","year":2010,"valuation_rank":4.0,"market_cap_to_ni":21.19},{"company":"MCD","year":2010,"valuation_rank":5.0,"market_cap_to_ni":20.75},{"company":"PCG","year":2010,"valuation_rank":6.0,"market_cap_to_ni":15.22},{"company":"MSFT","year":2010,"valuation_rank":7.0,"market_cap_to_ni":12.73},{"company":"INTC","year":2010,"valuation_rank":8.0,"market_cap_to_ni":10.23},{"company":"BCS","year":2010,"valuation_rank":9.0,"market_cap_to_ni":6.7},{"company":"AIG","year":2010,"valuation_rank":10.0,"market_cap_to_ni":3.81},{"company":"AMZN","year":2011,"valuation_rank":1.0,"market_cap_to_ni":124.75},{"company":"NVDA","year":2011,"valuation_rank":2.0,"market_cap_to_ni":33.42},{"company":"SHLDQ","year":2011,"valuation_rank":3.0,"market_cap_to_ni":25.49},{"company":"GOOG","year":2011,"valuation_rank":4.0,"market_cap_to_ni":21.33},{"company":"PCG","year":2011,"valuation_rank":5.0,"market_cap_to_ni":20.31},{"company":"MCD","year":2011,"valuation_rank":6.0,"market_cap_to_ni":16.09},{"company":"AAPL","year":2011,"valuation_rank":7.0,"market_cap_to_ni":14.52},{"company":"INTC","year":2011,"valuation_rank":8.0,"market_cap_to_ni":9.54},{"company":"MSFT","year":2011,"valuation_rank":9.0,"market_cap_to_ni":9.43},{"company":"BCS","year":2011,"valuation_rank":10.0,"market_cap_to_ni":5.28},{"company":"AIG","year":2011,"valuation_rank":11.0,"market_cap_to_ni":2.22},{"company":"PCG","year":2012,"valuation_rank":1.0,"market_cap_to_ni":22.18},{"company":"GOOG","year":2012,"valuation_rank":2.0,"market_cap_to_ni":21.47},{"company":"MCD","year":2012,"valuation_rank":3.0,"market_cap_to_ni":17.67},{"company":"AIG","year":2012,"valuation_rank":4.0,"market_cap_to_ni":15.16},{"company":"MSFT","year":2012,"valuation_rank":5.0,"market_cap_to_ni":13.24},{"company":"NVDA","year":2012,"valuation_rank":6.0,"market_cap_to_ni":13.18},{"company":"AAPL","year":2012,"valuation_rank":7.0,"market_cap_to_ni":12.0},{"company":"INTC","year":2012,"valuation_rank":8.0,"market_cap_to_ni":9.32},{"company":"AMZN","year":2013,"valuation_rank":1.0,"market_cap_to_ni":666.2},{"company":"BCS","year":2013,"valuation_rank":2.0,"market_cap_to_ni":65.55},{"company":"PCG","year":2013,"valuation_rank":3.0,"market_cap_to_ni":31.07},{"company":"GOOG","year":2013,"valuation_rank":4.0,"market_cap_to_ni":29.18},{"company":"MCD","year":2013,"valuation_rank":5.0,"market_cap_to_ni":16.33},{"company":"NVDA","year":2013,"valuation_rank":6.0,"market_cap_to_ni":16.19},{"company":"MSFT","year":2013,"valuation_rank":7.0,"market_cap_to_ni":14.28},{"company":"AAPL","year":2013,"valuation_rank":8.0,"market_cap_to_ni":13.63},{"company":"INTC","year":2013,"valuation_rank":9.0,"market_cap_to_ni":13.41},{"company":"AIG","year":2013,"valuation_rank":10.0,"market_cap_to_ni":8.27},{"company":"GOOG","year":2014,"valuation_rank":1.0,"market_cap_to_ni":25.1},{"company":"NVDA","year":2014,"valuation_rank":2.0,"market_cap_to_ni":24.77},{"company":"MCD","year":2014,"valuation_rank":3.0,"market_cap_to_ni":22.8},{"company":"PCG","year":2014,"valuation_rank":4.0,"market_cap_to_ni":18.17},{"company":"MSFT","year":2014,"valuation_rank":5.0,"market_cap_to_ni":17.35},{"company":"AAPL","year":2014,"valuation_rank":6.0,"market_cap_to_ni":16.38},{"company":"INTC","year":2014,"valuation_rank":7.0,"market_cap_to_ni":14.99},{"company":"AIG","year":2014,"valuation_rank":8.0,"market_cap_to_ni":10.41},{"company":"PYPL","year":2014,"valuation_rank":NaN,"market_cap_to_ni":NaN},{"company":"AMZN","year":2015,"valuation_rank":1.0,"market_cap_to_ni":531.59},{"company":"MSFT","year":2015,"valuation_rank":2.0,"market_cap_to_ni":36.35},{"company":"PYPL","year":2015,"valuation_rank":3.0,"market_cap_to_ni":36.02},{"company":"PCG","year":2015,"valuation_rank":4.0,"market_cap_to_ni":35.16},{"company":"AIG","year":2015,"valuation_rank":5.0,"market_cap_to_ni":34.91},{"company":"GOOG","year":2015,"valuation_rank":6.0,"market_cap_to_ni":32.96},{"company":"NVDA","year":2015,"valuation_rank":7.0,"market_cap_to_ni":28.1},{"company":"MCD","year":2015,"valuation_rank":8.0,"market_cap_to_ni":22.32},{"company":"INTC","year":2015,"valuation_rank":9.0,"market_cap_to_ni":14.24},{"company":"AAPL","year":2015,"valuation_rank":10.0,"market_cap_to_ni":10.99},{"company":"AMZN","year":2016,"valuation_rank":1.0,"market_cap_to_ni":150.28},{"company":"NVDA","year":2016,"valuation_rank":2.0,"market_cap_to_ni":93.7},{"company":"PYPL","year":2016,"valuation_rank":3.0,"market_cap_to_ni":34.0},{"company":"MCD","year":2016,"valuation_rank":4.0,"market_cap_to_ni":29.28},{"company":"GOOG","year":2016,"valuation_rank":5.0,"market_cap_to_ni":27.25},{"company":"MSFT","year":2016,"valuation_rank":6.0,"market_cap_to_ni":23.52},{"company":"BCS","year":2016,"valuation_rank":7.0,"market_cap_to_ni":19.47},{"company":"INTC","year":2016,"valuation_rank":8.0,"market_cap_to_ni":16.66},{"company":"PCG","year":2016,"valuation_rank":9.0,"market_cap_to_ni":16.55},{"company":"AAPL","year":2016,"valuation_rank":10.0,"market_cap_to_ni":13.52},{"company":"AMZN","year":2017,"valuation_rank":1.0,"market_cap_to_ni":185.8},{"company":"NVDA","year":2017,"valuation_rank":2.0,"market_cap_to_ni":70.38},{"company":"GOOG","year":2017,"valuation_rank":3.0,"market_cap_to_ni":57.37},{"company":"PYPL","year":2017,"valuation_rank":4.0,"market_cap_to_ni":49.29},{"company":"MCD","year":2017,"valuation_rank":5.0,"market_cap_to_ni":26.36},{"company":"MSFT","year":2017,"valuation_rank":6.0,"market_cap_to_ni":25.89},{"company":"INTC","year":2017,"valuation_rank":7.0,"market_cap_to_ni":22.5},{"company":"AAPL","year":2017,"valuation_rank":8.0,"market_cap_to_ni":17.97},{"company":"PCG","year":2017,"valuation_rank":9.0,"market_cap_to_ni":7.48},{"company":"AMZN","year":2018,"valuation_rank":1.0,"market_cap_to_ni":72.91},{"company":"PYPL","year":2018,"valuation_rank":2.0,"market_cap_to_ni":48.17},{"company":"MSFT","year":2018,"valuation_rank":3.0,"market_cap_to_ni":47.05},{"company":"NVDA","year":2018,"valuation_rank":4.0,"market_cap_to_ni":26.73},{"company":"MCD","year":2018,"valuation_rank":5.0,"market_cap_to_ni":25.12},{"company":"GOOG","year":2018,"valuation_rank":6.0,"market_cap_to_ni":23.41},{"company":"BCS","year":2018,"valuation_rank":7.0,"market_cap_to_ni":17.03},{"company":"AAPL","year":2018,"valuation_rank":8.0,"market_cap_to_ni":12.57},{"company":"INTC","year":2018,"valuation_rank":9.0,"market_cap_to_ni":10.17},{"company":"AMZN","year":2019,"valuation_rank":1.0,"market_cap_to_ni":79.06},{"company":"PYPL","year":2019,"valuation_rank":2.0,"market_cap_to_ni":51.65},{"company":"NVDA","year":2019,"valuation_rank":3.0,"market_cap_to_ni":34.77},{"company":"MSFT","year":2019,"valuation_rank":4.0,"market_cap_to_ni":30.66},{"company":"GOOG","year":2019,"valuation_rank":5.0,"market_cap_to_ni":26.73},{"company":"MCD","year":2019,"valuation_rank":6.0,"market_cap_to_ni":26.54},{"company":"AAPL","year":2019,"valuation_rank":7.0,"market_cap_to_ni":23.61},{"company":"AIG","year":2019,"valuation_rank":8.0,"market_cap_to_ni":13.42},{"company":"INTC","year":2019,"valuation_rank":9.0,"market_cap_to_ni":12.37},{"company":"BCS","year":2019,"valuation_rank":10.0,"market_cap_to_ni":9.75},{"company":"NVDA","year":2020,"valuation_rank":1.0,"market_cap_to_ni":115.61},{"company":"AMZN","year":2020,"valuation_rank":2.0,"market_cap_to_ni":76.61},{"company":"PYPL","year":2020,"valuation_rank":3.0,"market_cap_to_ni":65.3},{"company":"MCD","year":2020,"valuation_rank":4.0,"market_cap_to_ni":42.34},{"company":"AAPL","year":2020,"valuation_rank":5.0,"market_cap_to_ni":39.3},{"company":"MSFT","year":2020,"valuation_rank":6.0,"market_cap_to_ni":37.98},{"company":"GOOG","year":2020,"valuation_rank":7.0,"market_cap_to_ni":29.29},{"company":"BCS","year":2020,"valuation_rank":8.0,"market_cap_to_ni":17.69},{"company":"INTC","year":2020,"valuation_rank":9.0,"market_cap_to_ni":4.98},{"company":"NVDA","year":2021,"valuation_rank":1.0,"market_cap_to_ni":169.87},{"company":"PYPL","year":2021,"valuation_rank":2.0,"market_cap_to_ni":53.15},{"company":"AMZN","year":2021,"valuation_rank":3.0,"market_cap_to_ni":50.68},{"company":"MSFT","year":2021,"valuation_rank":4.0,"market_cap_to_ni":41.21},{"company":"AAPL","year":2021,"valuation_rank":5.0,"market_cap_to_ni":30.77},{"company":"MCD","year":2021,"valuation_rank":6.0,"market_cap_to_ni":25.58},{"company":"GOOG","year":2021,"valuation_rank":7.0,"market_cap_to_ni":25.12},{"company":"INTC","year":2021,"valuation_rank":8.0,"market_cap_to_ni":10.54},{"company":"AIG","year":2021,"valuation_rank":9.0,"market_cap_to_ni":5.04},{"company":"BCS","year":2021,"valuation_rank":10.0,"market_cap_to_ni":4.97},{"company":"NVDA","year":2022,"valuation_rank":1.0,"market_cap_to_ni":36.86},{"company":"PYPL","year":2022,"valuation_rank":2.0,"market_cap_to_ni":33.56},{"company":"MCD","year":2022,"valuation_rank":3.0,"market_cap_to_ni":30.17},{"company":"MSFT","year":2022,"valuation_rank":4.0,"market_cap_to_ni":24.58},{"company":"PCG","year":2022,"valuation_rank":5.0,"market_cap_to_ni":22.93},{"company":"AAPL","year":2022,"valuation_rank":6.0,"market_cap_to_ni":20.71},{"company":"GOOG","year":2022,"valuation_rank":7.0,"market_cap_to_ni":19.08},{"company":"INTC","year":2022,"valuation_rank":8.0,"market_cap_to_ni":13.61},{"company":"BCS","year":2022,"valuation_rank":9.0,"market_cap_to_ni":5.24},{"company":"AIG","year":2022,"valuation_rank":10.0,"market_cap_to_ni":4.59}],"growth":[{"company":"AAPL","year":2009,"nominal_growth_pct":NaN,"real_growth_pct":NaN},{"company":"AAPL","year":2010,"nominal_growth_pct":52.0219,"real_growth_pct":50.3819},{"company":"AAPL","year":2011,"nominal_growth_pct":65.9624,"real_growth_pct":62.8056},{"company":"AAPL","year":2012,"nominal_growth_pct":44.5815,"real_growth_pct":42.5122},{"company":"AAPL","year":2013,"nominal_growth_pct":9.2021,"real_growth_pct":7.7373},{"company":"AAPL","year":2014,"nominal_growth_pct":6.954,"real_growth_pct":5.3318},{"company":"AAPL","year":2015,"nominal_growth_pct":27.8563,"real_growth_pct":27.7377},{"company":"AAPL","year":2016,"nominal_growth_pct":-7.7342,"real_growth_pct":-8.9958},{"company":"AAPL","year":2017,"nominal_growth_pct":6.3045,"real_growth_pct":4.1744},{"company":"AAPL","year":2018,"nominal_growth_pct":15.862,"real_growth_pct":13.4194},{"company":"AAPL","year":2019,"nominal_growth_pct":-2.0411,"real_growth_pct":-3.8533},{"company":"AAPL","year":2020,"nominal_growth_pct":5.5121,"real_growth_pct":4.2785},{"company":"AAPL","year":2021,"nominal_growth_pct":33.2594,"real_growth_pct":28.5615},{"company":"AAPL","year":2022,"nominal_growth_pct":7.7938,"real_growth_pct":-0.209},{"company":"AIG","year":2009,"nominal_growth_pct":NaN,"real_growth_pct":NaN},{"company":"AIG","year":2010,"nominal_growth_pct":-3.47,"real_growth_pct":-5.11},{"company":"AIG","year":2011,"nominal_growth_pct":-10.6057,"real_growth_pct":-13.7625},{"company":"AIG","year":2012,"nominal_growth_pct":9.3833,"real_growth_pct":7.314},{"company":"AIG","year":2013,"nominal_growth_pct":-3.2859,"real_growth_pct":-4.7507},{"company":"AIG","year":2014,"nominal_growth_pct":-6.4872,"real_growth_pct":-8.1094},{"company":"AIG","year":2015,"nominal_growth_pct":-9.4386,"real_growth_pct":-9.5572},{"company":"AIG","year":2016,"nominal_growth_pct":-10.2183,"real_growth_pct":-11.4799},{"company":"AIG","year":2017,"nominal_growth_pct":-5.4366,"real_growth_pct":-7.5667},{"company":"AIG","year":2018,"nominal_growth_pct":-4.3033,"real_growth_pct":-6.7459},{"company":"AIG","year":2019,"nominal_growth_pct":4.9737,"real_growth_pct":3.1615},{"company":"AIG","year":2020,"nominal_growth_pct":-12.0814,"real_growth_pct":-13.315},{"company":"AIG","year":2021,"nominal_growth_pct":19.0255,"real_growth_pct":14.3276},{"company":"AIG","year":2022,"nominal_growth_pct":8.4139,"real_growth_pct":0.4111},{"company":"AMZN","year":2009,"nominal_growth_pct":NaN,"real_growth_pct":NaN},{"company":"AMZN","year":2010,"nominal_growth_pct":39.5569,"real_growth_pct":37.9169},{"company":"AMZN","year":2011,"nominal_growth_pct":40.5596,"real_growth_pct":37.4028},{"company":"AMZN","year":2012,"nominal_growth_pct":27.0732,"real_growth_pct":25.0039},{"company":"AMZN","year":2013,"nominal_growth_pct":21.8667,"real_growth_pct":20.4019},{"company":"AMZN","year":2014,"nominal_growth_pct":19.524,"real_growth_pct":17.9018},{"company":"AMZN","year":2015,"nominal_growth_pct":20.2477,"real_growth_pct":20.1291},{"company":"AMZN","year":2016,"nominal_growth_pct":27.0835,"real_growth_pct":25.8219},{"company":"AMZN","year":2017,"nominal_growth_pct":30.7963,"real_growth_pct":28.6662},{"company":"AMZN","year":2018,"nominal_growth_pct":30.934,"real_growth_pct":28.4914},{"company":"AMZN","year":2019,"nominal_growth_pct":20.4541,"real_growth_pct":18.6419},{"company":"AMZN","year":2020,"nominal_growth_pct":37.6234,"real_growth_pct":36.3898},{"company":"AMZN","year":2021,"nominal_growth_pct":21.6954,"real_growth_pct":16.9975},{"company":"AMZN","year":2022,"nominal_growth_pct":9.3995,"real_growth_pct":1.3967},{"company":"BCS","year":2009,"nominal_growth_pct":NaN,"real_growth_pct":NaN},{"company":"BCS","year":2010,"nominal_growth_pct":6.6056,"real_growth_pct":4.9656},{"company":"BCS","year":2011,"nominal_growth_pct":-0.333,"real_growth_pct":-3.4898},{"company":"BCS","year":2012,"nominal_growth_pct":-5.7928,"real_growth_pct":-7.8621},{"company":"BCS","year":2013,"nominal_growth_pct":-5.0468,"real_growth_pct":-6.5116},{"company":"BCS","year":2014,"nominal_growth_pct":-4.6566,"real_growth_pct":-6.2788},{"company":"BCS","year":2015,"nominal_growth_pct":-6.6175,"real_growth_pct":-6.7361},{"company":"BCS","year":2016,"nominal_growth_pct":-25.3002,"real_growth_pct":-26.5618},{"company":"BCS","year":2017,"nominal_growth_pct":-6.5691,"real_growth_pct":-8.6992},{"company":"BCS","year":2018,"nominal_growth_pct":3.864,"real_growth_pct":1.4214},{"company":"BCS","year":2019,"nominal_growth_pct":-2.0928,"real_growth_pct":-3.905},{"company":"BCS","year":2020,"nominal_growth_pct":1.1789,"real_growth_pct":-0.0547},{"company":"BCS","year":2021,"nominal_growth_pct":7.9511,"real_growth_pct":3.2532},{"company":"BCS","year":2022,"nominal_growth_pct":2.3149,"real_growth_pct":-5.6879},{"company":"GOOG","year":2009,"nominal_growth_pct":NaN,"real_growth_pct":NaN},{"company":"GOOG","year":2010,"nominal_growth_pct":23.9736,"real_growth_pct":22.3336},{"company":"GOOG","year":2011,"nominal_growth_pct":29.2759,"real_growth_pct":26.1191},{"company":"GOOG","year":2012,"nominal_growth_pct":21.4589,"real_growth_pct":19.3896},{"company":"GOOG","year":2013,"nominal_growth_pct":20.5912,"real_growth_pct":19.1264},{"company":"GOOG","year":2014,"nominal_growth_pct":18.88,"real_growth_pct":17.2578},{"company":"GOOG","year":2015,"nominal_growth_pct":13.618,"real_growth_pct":13.4994},{"company":"GOOG","year":2016,"nominal_growth_pct":20.3803,"real_growth_pct":19.1187},{"company":"GOOG","year":2017,"nominal_growth_pct":22.8011,"real_growth_pct":20.671},{"company":"GOOG","year":2018,"nominal_growth_pct":23.4216,"real_growth_pct":20.979},{"company":"GOOG","year":2019,"nominal_growth_pct":18.3001,"real_growth_pct":16.4879},{"company":"GOOG","year":2020,"nominal_growth_pct":12.7705,"real_growth_pct":11.5369},{"company":"GOOG","year":2021,"nominal_growth_pct":41.1501,"real_growth_pct":36.4522},{"company":"GOOG","year":2022,"nominal_growth_pct":9.7808,"real_growth_pct":1.778},{"company":"INTC","year":2009,"nominal_growth_pct":NaN,"real_growth_pct":NaN},{"company":"INTC","year":2010,"nominal_growth_pct":24.1865,"real_growth_pct":22.5465},{"company":"INTC","year":2011,"nominal_growth_pct":23.7856,"real_growth_pct":20.6288},{"company":"INTC","year":2012,"nominal_growth_pct":-1.2185,"real_growth_pct":-3.2878},{"company":"INTC","year":2013,"nominal_growth_pct":-1.1867,"real_growth_pct":-2.6515},{"company":"INTC","year":2014,"nominal_growth_pct":5.9991,"real_growth_pct":4.3769},{"company":"INTC","year":2015,"nominal_growth_pct":-0.9218,"real_growth_pct":-1.0404},{"company":"INTC","year":2016,"nominal_growth_pct":7.2839,"real_growth_pct":6.0223},{"company":"INTC","year":2017,"nominal_growth_pct":5.6814,"real_growth_pct":3.5513},{"company":"INTC","year":2018,"nominal_growth_pct":12.8854,"real_growth_pct":10.4428},{"company":"INTC","year":2019,"nominal_growth_pct":1.5766,"real_growth_pct":-0.2356},{"company":"INTC","year":2020,"nominal_growth_pct":8.2012,"real_growth_pct":6.9676},{"company":"INTC","year":2021,"nominal_growth_pct":1.4859,"real_growth_pct":-3.212},{"company":"INTC","year":2022,"nominal_growth_pct":-20.2091,"real_growth_pct":-28.2119},{"company":"MCD","year":2009,"nominal_growth_pct":NaN,"real_growth_pct":NaN},{"company":"MCD","year":2010,"nominal_growth_pct":5.8471,"real_growth_pct":4.2071},{"company":"MCD","year":2011,"nominal_growth_pct":12.1763,"real_growth_pct":9.0195},{"company":"MCD","year":2012,"nominal_growth_pct":2.0773,"real_growth_pct":0.008},{"company":"MCD","year":2013,"nominal_growth_pct":1.9541,"real_growth_pct":0.4893},{"company":"MCD","year":2014,"nominal_growth_pct":-2.3639,"real_growth_pct":-3.9861},{"company":"MCD","year":2015,"nominal_growth_pct":-7.3914,"real_growth_pct":-7.51},{"company":"MCD","year":2016,"nominal_growth_pct":-3.113,"real_growth_pct":-4.3746},{"company":"MCD","year":2017,"nominal_growth_pct":-7.3167,"real_growth_pct":-9.4468},{"company":"MCD","year":2018,"nominal_growth_pct":-6.8469,"real_growth_pct":-9.2895},{"company":"MCD","year":2019,"nominal_growth_pct":0.501,"real_growth_pct":-1.3112},{"company":"MCD","year":2020,"nominal_growth_pct":-10.0944,"real_growth_pct":-11.328},{"company":"MCD","year":2021,"nominal_growth_pct":20.9035,"real_growth_pct":16.2056},{"company":"MCD","year":2022,"nominal_growth_pct":-0.1735,"real_growth_pct":-8.1763},{"company":"MSFT","year":2009,"nominal_growth_pct":NaN,"real_growth_pct":NaN},{"company":"MSFT","year":2010,"nominal_growth_pct":6.9254,"real_growth_pct":5.2854},{"company":"MSFT","year":2011,"nominal_growth_pct":11.9375,"real_growth_pct":8.7807},{"company":"MSFT","year":2012,"nominal_growth_pct":5.4044,"real_growth_pct":3.3351},{"company":"MSFT","year":2013,"nominal_growth_pct":5.5966,"real_growth_pct":4.1318},{"company":"MSFT","year":2014,"nominal_growth_pct":11.5403,"real_growth_pct":9.9181},{"company":"MSFT","year":2015,"nominal_growth_pct":7.7701,"real_growth_pct":7.6515},{"company":"MSFT","year":2016,"nominal_growth_pct":-2.5924,"real_growth_pct":-3.854},{"company":"MSFT","year":2017,"nominal_growth_pct":5.9427,"real_growth_pct":3.8126},{"company":"MSFT","year":2018,"nominal_growth_pct":14.2786,"real_growth_pct":11.836},{"company":"MSFT","year":2019,"nominal_growth_pct":14.0295,"real_growth_pct":12.2173},{"company":"MSFT","year":2020,"nominal_growth_pct":13.6456,"real_growth_pct":12.412},{"company":"MSFT","year":2021,"nominal_growth_pct":17.5317,"real_growth_pct":12.8338},{"company":"MSFT","year":2022,"nominal_growth_pct":17.9561,"real_growth_pct":9.9533},{"company":"MSFT","year":2023,"nominal_growth_pct":6.882,"real_growth_pct":3.182},{"company":"NVDA","year":2009,"nominal_growth_pct":NaN,"real_growth_pct":NaN},{"company":"NVDA","year":2010,"nominal_growth_pct":-2.8735,"real_growth_pct":-4.5135},{"company":"NVDA","year":2011,"nominal_growth_pct":6.5194,"real_growth_pct":3.3626},{"company":"NVDA","year":2012,"nominal_growth_pct":12.8304,"real_growth_pct":10.7611},{"company":"NVDA","year":2013,"nominal_growth_pct":7.0594,"real_growth_pct":5.5946},{"company":"NVDA","year":2014,"nominal_growth_pct":-3.5083,"real_growth_pct":-5.1305},{"company":"NVDA","year":2015,"nominal_growth_pct":13.3656,"real_growth_pct":13.247},{"company":"NVDA","year":2016,"nominal_growth_pct":7.0056,"real_growth_pct":5.744},{"company":"NVDA","year":2017,"nominal_growth_pct":37.9242,"real_growth_pct":35.7941},{"company":"NVDA","year":2018,"nominal_growth_pct":40.5789,"real_growth_pct":38.1363},{"company":"NVDA","year":2019,"nominal_growth_pct":20.6094,"real_growth_pct":18.7972},{"company":"NVDA","year":2020,"nominal_growth_pct":-6.8112,"real_growth_pct":-8.0448},{"company":"NVDA","year":2021,"nominal_growth_pct":52.7294,"real_growth_pct":48.0315},{"company":"NVDA","year":2022,"nominal_growth_pct":61.4033,"real_growth_pct":53.4005},{"company":"NVDA","year":2023,"nominal_growth_pct":0.2229,"real_growth_pct":-3.4771},{"company":"PCG","year":2009,"nominal_growth_pct":NaN,"real_growth_pct":NaN},{"company":"PCG","year":2010,"nominal_growth_pct":3.2988,"real_growth_pct":1.6588},{"company":"PCG","year":2011,"nominal_growth_pct":8.0558,"real_growth_pct":4.899},{"company":"PCG","year":2012,"nominal_growth_pct":0.5616,"real_growth_pct":-1.5077},{"company":"PCG","year":2013,"nominal_growth_pct":3.7101,"real_growth_pct":2.2453},{"company":"PCG","year":2014,"nominal_growth_pct":9.5653,"real_growth_pct":7.9431},{"company":"PCG","year":2015,"nominal_growth_pct":-1.5038,"real_growth_pct":-1.6224},{"company":"PCG","year":2016,"nominal_growth_pct":4.9486,"real_growth_pct":3.687},{"company":"PCG","year":2017,"nominal_growth_pct":-3.0058,"real_growth_pct":-5.1359},{"company":"PCG","year":2018,"nominal_growth_pct":-2.1943,"real_growth_pct":-4.6369},{"company":"PCG","year":2019,"nominal_growth_pct":2.2078,"real_growth_pct":0.3956},{"company":"PCG","year":2020,"nominal_growth_pct":7.823,"real_growth_pct":6.5894},{"company":"PCG","year":2021,"nominal_growth_pct":11.7657,"real_growth_pct":7.0678},{"company":"PCG","year":2022,"nominal_growth_pct":5.0286,"real_growth_pct":-2.9742},{"company":"PYPL","year":2014,"nominal_growth_pct":NaN,"real_growth_pct":NaN},{"company":"PYPL","year":2015,"nominal_growth_pct":15.2399,"real_growth_pct":15.1213},{"company":"PYPL","year":2016,"nominal_growth_pct":17.2362,"real_growth_pct":15.9746},{"company":"PYPL","year":2017,"nominal_growth_pct":20.7711,"real_growth_pct":18.641},{"company":"PYPL","year":2018,"nominal_growth_pct":18.0006,"real_growth_pct":15.558},{"company":"PYPL","year":2019,"nominal_growth_pct":15.0217,"real_growth_pct":13.2095},{"company":"PYPL","year":2020,"nominal_growth_pct":20.718,"real_growth_pct":19.4844},{"company":"PYPL","year":2021,"nominal_growth_pct":18.2577,"real_growth_pct":13.5598},{"company":"PYPL","year":2022,"nominal_growth_pct":8.4624,"real_growth_pct":0.4596},{"company":"SHLDQ","year":2009,"nominal_growth_pct":NaN,"real_growth_pct":NaN},{"company":"SHLDQ","year":2010,"nominal_growth_pct":-7.291,"real_growth_pct":-8.931},{"company":"SHLDQ","year":2011,"nominal_growth_pct":-1.6052,"real_growth_pct":-4.762},{"company":"SHLDQ","year":2012,"nominal_growth_pct":-2.5713,"real_growth_pct":-4.6406},{"company":"SHLDQ","year":2013,"nominal_growth_pct":-4.1211,"real_growth_pct":-5.5859},{"company":"SHLDQ","year":2014,"nominal_growth_pct":-9.1986,"real_growth_pct":-10.8208},{"company":"SHLDQ","year":2015,"nominal_growth_pct":-13.7891,"real_growth_pct":-13.9077},{"company":"SHLDQ","year":2016,"nominal_growth_pct":-19.3987,"real_growth_pct":-20.6603},{"company":"SHLDQ","year":2017,"nominal_growth_pct":-11.9621,"real_growth_pct":-14.0922},{"company":"SHLDQ","year":2018,"nominal_growth_pct":-24.5551,"real_growth_pct":-26.9977}],"comp":[{"company":"MSFT","year":2009,"composite_rank":1},{"company":"MCD","year":2009,"composite_rank":2},{"company":"AAPL","year":2009,"composite_rank":2},{"company":"BCS","year":2009,"composite_rank":2},{"company":"GOOG","year":2009,"composite_rank":2},{"company":"AMZN","year":2009,"composite_rank":6},{"company":"INTC","year":2009,"composite_rank":7},{"company":"PCG","year":2009,"composite_rank":8},{"company":"SHLDQ","year":2009,"composite_rank":8},{"company":"MSFT","year":2010,"composite_rank":1},{"company":"AIG","year":2010,"composite_rank":2},{"company":"AAPL","year":2010,"composite_rank":3},{"company":"INTC","year":2010,"composite_rank":4},{"company":"MCD","year":2010,"composite_rank":5},{"company":"AMZN","year":2010,"composite_rank":6},{"company":"GOOG","year":2010,"composite_rank":7},{"company":"PCG","year":2010,"composite_rank":8},{"company":"SHLDQ","year":2010,"composite_rank":9},{"company":"BCS","year":2010,"composite_rank":10},{"company":"AAPL","year":2011,"composite_rank":1},{"company":"MSFT","year":2011,"composite_rank":2},{"company":"INTC","year":2011,"composite_rank":2},{"company":"MCD","year":2011,"composite_rank":4},{"company":"GOOG","year":2011,"composite_rank":5},{"company":"AMZN","year":2011,"composite_rank":5},{"company":"NVDA","year":2011,"composite_rank":7},{"company":"PCG","year":2011,"composite_rank":8},{"company":"BCS","year":2011,"composite_rank":9},{"company":"AIG","year":2011,"composite_rank":10},{"company":"SHLDQ","year":2011,"composite_rank":11},{"company":"MSFT","year":2012,"composite_rank":1},{"company":"MCD","year":2012,"composite_rank":2},{"company":"AAPL","year":2012,"composite_rank":3},{"company":"INTC","year":2012,"composite_rank":4},{"company":"GOOG","year":2012,"composite_rank":5},{"company":"PCG","year":2012,"composite_rank":5},{"company":"NVDA","year":2012,"composite_rank":7},{"company":"AIG","year":2012,"composite_rank":8},{"company":"AAPL","year":2013,"composite_rank":1},{"company":"MCD","year":2013,"composite_rank":2},{"company":"MSFT","year":2013,"composite_rank":2},{"company":"INTC","year":2013,"composite_rank":2},{"company":"GOOG","year":2013,"composite_rank":5},{"company":"NVDA","year":2013,"composite_rank":6},{"company":"PCG","year":2013,"composite_rank":7},{"company":"AMZN","year":2013,"composite_rank":8},{"company":"AIG","year":2013,"composite_rank":9},{"company":"BCS","year":2013,"composite_rank":10},{"company":"AAPL","year":2014,"composite_rank":1},{"company":"MCD","year":2014,"composite_rank":2},{"company":"INTC","year":2014,"composite_rank":3},{"company":"MSFT","year":2014,"composite_rank":4},{"company":"GOOG","year":2014,"composite_rank":5},{"company":"NVDA","year":2014,"composite_rank":5},{"company":"PCG","year":2014,"composite_rank":7},{"company":"PYPL","year":2014,"composite_rank":8},{"company":"AIG","year":2014,"composite_rank":9},{"company":"AAPL","year":2015,"composite_rank":1},{"company":"MCD","year":2015,"composite_rank":2},{"company":"INTC","year":2015,"composite_rank":3},{"company":"MSFT","year":2015,"composite_rank":4},{"company":"GOOG","year":2015,"composite_rank":5},{"company":"PYPL","year":2015,"composite_rank":6},{"company":"PCG","year":2015,"composite_rank":6},{"company":"NVDA","year":2015,"composite_rank":8},{"company":"AMZN","year":2015,"composite_rank":8},{"company":"AIG","year":2015,"composite_rank":10},{"company":"AAPL","year":2016,"composite_rank":1},{"company":"INTC","year":2016,"composite_rank":2},{"company":"MSFT","year":2016,"composite_rank":3},{"company":"GOOG","year":2016,"composite_rank":3},{"company":"AMZN","year":2016,"composite_rank":5},{"company":"NVDA","year":2016,"composite_rank":6},{"company":"PYPL","year":2016,"composite_rank":7},{"company":"PCG","year":2016,"composite_rank":8},{"company":"BCS","year":2016,"composite_rank":9},{"company":"MCD","year":2016,"composite_rank":9},{"company":"AAPL","year":2017,"composite_rank":1},{"company":"MSFT","year":2017,"composite_rank":1},{"company":"NVDA","year":2017,"composite_rank":3},{"company":"INTC","year":2017,"composite_rank":3},{"company":"AMZN","year":2017,"composite_rank":5},{"company":"PCG","year":2017,"composite_rank":6},{"company":"GOOG","year":2017,"composite_rank":6},{"company":"PYPL","year":2017,"composite_rank":8},{"company":"MCD","year":2017,"composite_rank":9},{"company":"AAPL","year":2018,"composite_rank":1},{"company":"NVDA","year":2018,"composite_rank":1},{"company":"INTC","year":2018,"composite_rank":1},{"company":"AMZN","year":2018,"composite_rank":4},{"company":"MSFT","year":2018,"composite_rank":5},{"company":"GOOG","year":2018,"composite_rank":6},{"company":"PYPL","year":2018,"composite_rank":7},{"company":"BCS","year":2018,"composite_rank":7},{"company":"MCD","year":2018,"composite_rank":9},{"company":"AAPL","year":2019,"composite_rank":1},{"company":"NVDA","year":2019,"composite_rank":2},{"company":"INTC","year":2019,"composite_rank":2},{"company":"MSFT","year":2019,"composite_rank":4},{"company":"AMZN","year":2019,"composite_rank":4},{"company":"GOOG","year":2019,"composite_rank":6},{"company":"PYPL","year":2019,"composite_rank":7},{"company":"MCD","year":2019,"composite_rank":8},{"company":"AIG","year":2019,"composite_rank":9},{"company":"BCS","year":2019,"composite_rank":10},{"company":"AAPL","year":2020,"composite_rank":1},{"company":"INTC","year":2020,"composite_rank":2},{"company":"NVDA","year":2020,"composite_rank":2},{"company":"MSFT","year":2020,"composite_rank":4},{"company":"AMZN","year":2020,"composite_rank":5},{"company":"GOOG","year":2020,"composite_rank":6},{"company":"BCS","year":2020,"composite_rank":7},{"company":"PYPL","year":2020,"composite_rank":8},{"company":"MCD","year":2020,"composite_rank":9},{"company":"AAPL","year":2021,"composite_rank":1},{"company":"MSFT","year":2021,"composite_rank":1},{"company":"GOOG","year":2021,"composite_rank":3},{"company":"NVDA","year":2021,"composite_rank":3},{"company":"INTC","year":2021,"composite_rank":5},{"company":"AMZN","year":2021,"composite_rank":6},{"company":"PYPL","year":2021,"composite_rank":7},{"company":"BCS","year":2021,"composite_rank":8},{"company":"MCD","year":2021,"composite_rank":9},{"company":"AIG","year":2021,"composite_rank":10},{"company":"AAPL","year":2022,"composite_rank":1},{"company":"MSFT","year":2022,"composite_rank":2},{"company":"NVDA","year":2022,"composite_rank":3},{"company":"GOOG","year":2022,"composite_rank":3},{"company":"PYPL","year":2022,"composite_rank":5},{"company":"BCS","year":2022,"composite_rank":6},{"company":"INTC","year":2022,"composite_rank":7},{"company":"PCG","year":2022,"composite_rank":8},{"company":"AIG","year":2022,"composite_rank":9},{"company":"MCD","year":2022,"composite_rank":10}]};
+
+const COLORS = {gold:'#C9A227', teal:'#45C7B8', red:'#E0685E', blue:'#6C93C7', grid:'#21262E', dim:'#5F6570'};
+
+// ---------- state ----------
+const state = {
+  page: 'overview',
+  companies: new Set(RAW.companies),
+  yFrom: RAW.years[0],
+  yTo: RAW.years[RAW.years.length-1],
+};
+
+// ---------- helpers ----------
+function fmtNum(v, d=1){ if(v===null||v===undefined||isNaN(v)) return '—'; return v.toFixed(d); }
+function fmtPct(v, d=1){ if(v===null||v===undefined||isNaN(v)) return '—'; return v.toFixed(d)+'%'; }
+function mean(arr){ const a = arr.filter(v=>v!==null&&v!==undefined&&!isNaN(v)); return a.length? a.reduce((x,y)=>x+y,0)/a.length : null; }
+
+function inYearRange(y){ return y>=state.yFrom && y<=state.yTo; }
+function activeCompanies(){ return RAW.companies.filter(c=>state.companies.has(c)); }
+
+function filterRows(rows){
+  return rows.filter(r=>state.companies.has(r.company) && inYearRange(r.year));
+}
+
+function groupAvg(rows, field){
+  const byC = {};
+  rows.forEach(r=>{ if(r[field]===null||r[field]===undefined) return; (byC[r.company]=byC[r.company]||[]).push(r[field]); });
+  const out = {};
+  Object.keys(byC).forEach(c=> out[c]=mean(byC[c]));
+  return out;
+}
+
+function pivot(rows, field){
+  const out = {};
+  rows.forEach(r=>{
+    out[r.company] = out[r.company] || {};
+    out[r.company][r.year] = r[field];
+  });
+  return out;
+}
+
+// color interpolation
+function hexToRgb(h){ h=h.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+function lerp(a,b,t){ return a+(b-a)*t; }
+function mixColor(c1,c2,t){
+  const a=hexToRgb(c1), b=hexToRgb(c2);
+  return `rgb(${Math.round(lerp(a[0],b[0],t))},${Math.round(lerp(a[1],b[1],t))},${Math.round(lerp(a[2],b[2],t))})`;
+}
+// value scaled 0..1 where 1 = "good" -> teal, 0 = "bad" -> red, mid -> panel bg-ish
+function goodScaleColor(t){
+  t = Math.max(0,Math.min(1,t));
+  if(t>0.5) return mixColor('#3A3F46', COLORS.teal, (t-0.5)*2);
+  return mixColor(COLORS.red, '#3A3F46', t*2);
+}
+
+// ---------- SVG bar chart (horizontal) ----------
+function hBarChart({data, valueFmt=(v)=>fmtNum(v,2), colorFn=null, width=620, barH=22, gap=8, zeroLine=false, unit=''}){
+  const entries = Object.entries(data).filter(([,v])=>v!==null&&v!==undefined&&!isNaN(v));
+  if(entries.length===0) return '<div class="empty-state">No data for current filters</div>';
+  entries.sort((a,b)=>b[1]-a[1]);
+  const vals = entries.map(e=>e[1]);
+  const min = Math.min(0, ...vals), max = Math.max(0, ...vals);
+  const labelW = 56, padR = 60;
+  const plotW = width - labelW - padR;
+  const zeroX = labelW + (0 - min)/(max-min || 1) * plotW;
+  const h = entries.length*(barH+gap)+10;
+  let bars = '';
+  entries.forEach(([name,val],i)=>{
+    const y = i*(barH+gap)+8;
+    const x1 = labelW + (Math.min(0,val) - min)/(max-min||1)*plotW;
+    const x2 = labelW + (Math.max(0,val) - min)/(max-min||1)*plotW;
+    const w = Math.max(1, x2-x1);
+    const color = colorFn ? colorFn(val) : COLORS.gold;
+    const textX = val>=0 ? x2+6 : x1-6;
+    const anchor = val>=0 ? 'start' : 'end';
+    bars += `<text x="${labelW-8}" y="${y+barH/2+4}" text-anchor="end" class="barlabel">${name}</text>`;
+    bars += `<rect x="${x1}" y="${y}" width="${w}" height="${barH}" fill="${color}" rx="1"/>`;
+    bars += `<text x="${textX}" y="${y+barH/2+4}" text-anchor="${anchor}" class="barval">${valueFmt(val)}${unit}</text>`;
+  });
+  let zeroL = zeroLine ? `<line x1="${zeroX}" y1="2" x2="${zeroX}" y2="${h-4}" stroke="${COLORS.dim}" stroke-width="1" stroke-dasharray="2,3"/>` : '';
+  return `<svg viewBox="0 0 ${width} ${h}" width="100%" height="${h}">${zeroL}${bars}</svg>`;
+}
+
+// ---------- heatmap table ----------
+function heatmapTable({pivotData, years, goodDirection='low', center=null, digits=1, excludedNote=null}){
+  const companies = Object.keys(pivotData);
+  if(companies.length===0) return '<div class="empty-state">No data for current filters</div>';
+  // gather all values for scaling
+  let all = [];
+  companies.forEach(c=> years.forEach(y=>{ const v=pivotData[c][y]; if(v!==null&&v!==undefined&&!isNaN(v)) all.push(v); }));
+  if(all.length===0) return '<div class="empty-state">No data for current filters</div>';
+  let min = Math.min(...all), max = Math.max(...all);
+  if(center!==null){ const m = Math.max(Math.abs(min-center), Math.abs(max-center)); min = center-m; max = center+m; }
+  // sort companies by their row average (best first)
+  const rowAvg = {};
+  companies.forEach(c=>{ const vals = years.map(y=>pivotData[c][y]).filter(v=>v!==null&&v!==undefined&&!isNaN(v)); rowAvg[c]=mean(vals); });
+  const sorted = [...companies].sort((a,b)=>{
+    const av=rowAvg[a], bv=rowAvg[b];
+    if(av===null) return 1; if(bv===null) return -1;
+    return goodDirection==='low' ? av-bv : bv-av;
+  });
+  let head = `<th class="rowhead">Company</th>` + years.map(y=>`<th>${y}</th>`).join('') + `<th>Avg</th>`;
+  let rows = sorted.map(c=>{
+    let cells = years.map(y=>{
+      const v = pivotData[c][y];
+      if(v===null||v===undefined||isNaN(v)) return `<td class="empty">·</td>`;
+      let t = (v-min)/(max-min||1);
+      if(goodDirection==='low') t = 1-t;
+      const bg = goodScaleColor(t);
+      return `<td style="background:${bg}">${v.toFixed(digits)}</td>`;
+    }).join('');
+    const avgv = rowAvg[c];
+    return `<tr><td class="rowhead">${c}</td>${cells}<td class="rowhead" style="text-align:center;color:var(--gold)">${avgv!==null?avgv.toFixed(digits):'—'}</td></tr>`;
+  }).join('');
+  return `<div class="heatwrap"><table class="heat"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`
+    + (excludedNote ? `<div class="note-box">${excludedNote}</div>` : '');
+}
+
+// ---------- scatter (quadrant) ----------
+const QUADRANT_META = {
+  big_profitable:{label:'Big & profitable', color:COLORS.teal},
+  big_low_profit:{label:'Big, low profitability', color:COLORS.gold},
+  small_efficient:{label:'Small but efficient', color:COLORS.blue},
+  small_low_profit:{label:'Small & low profitability', color:COLORS.dim},
+};
+function quadrantScatter(rows, width=620, height=440){
+  if(rows.length===0) return '<div class="empty-state">No data for current filters</div>';
+  const pad = 46;
+  const plotW = width-pad*2, plotH = height-pad*2;
+  const xs = rows.map(r=>r.size_rank_inv), ys = rows.map(r=>r.profitability_rank_inv);
+  const xMin=1, xMax = Math.max(...xs, 12), yMin=1, yMax=Math.max(...ys, 12);
+  const X = v => pad + (v-xMin)/(xMax-xMin||1)*plotW;
+  const Y = v => height-pad - (v-yMin)/(yMax-yMin||1)*plotH;
+  const midX = X(5.5), midY = Y(5.5);
+  let dots = rows.map(r=>{
+    const meta = QUADRANT_META[r.quadrant];
+    const x=X(r.size_rank_inv), y=Y(r.profitability_rank_inv);
+    return `<g><circle cx="${x}" cy="${y}" r="6" fill="${meta.color}" fill-opacity="0.85" stroke="${meta.color}"/>
+    <text x="${x+9}" y="${y+4}" class="barlabel" font-size="11">${r.company}</text></g>`;
+  }).join('');
+  const gridlines = `
+    <line x1="${pad}" y1="${height-pad}" x2="${width-pad}" y2="${height-pad}" stroke="${COLORS.grid}"/>
+    <line x1="${pad}" y1="${pad-8}" x2="${pad}" y2="${height-pad}" stroke="${COLORS.grid}"/>
+    <line x1="${midX}" y1="${pad-8}" x2="${midX}" y2="${height-pad}" stroke="${COLORS.grid}" stroke-dasharray="2,3"/>
+    <line x1="${pad}" y1="${midY}" x2="${width-pad}" y2="${midY}" stroke="${COLORS.grid}" stroke-dasharray="2,3"/>
+  `;
+  const axisLabels = `
+    <text x="${width/2}" y="${height-8}" text-anchor="middle" class="axislabel">← smaller · avg. size rank (inverted) · bigger →</text>
+    <text x="14" y="${height/2}" text-anchor="middle" class="axislabel" transform="rotate(-90 14 ${height/2})">← less profitable · avg. profitability rank (inv) · more profitable →</text>
+  `;
+  return `<svg viewBox="0 0 ${width} ${height}" width="100%" height="${height}">${gridlines}${dots}${axisLabels}</svg>`;
+}
+
+// ---------- diverging bar (centered) ----------
+function divergingBar(data, center, width=620, barH=22, gap=8, unit=''){
+  const entries = Object.entries(data).filter(([,v])=>v!==null&&!isNaN(v)).map(([k,v])=>[k,v-center]);
+  return hBarChart({data:Object.fromEntries(entries), colorFn:(v)=> v>=0?COLORS.teal:COLORS.red, zeroLine:true, width, barH, gap, valueFmt:(v)=>fmtNum(v+center,2)+unit});
+}
+
+// ================= PAGE RENDERERS =================
+
+function renderOverview(){
+  const yoyRows = filterRows(RAW.yoy);
+  const profRows = filterRows(RAW.prof);
+  const compRows = filterRows(RAW.comp);
+  const growthRows = filterRows(RAW.growth);
+
+  // quadrant recompute from filtered prof rows
+  const byC = {};
+  profRows.forEach(r=>{ (byC[r.company]=byC[r.company]||{s:[],p:[]}); byC[r.company].s.push(r.size_rank_inv); byC[r.company].p.push(r.profitability_rank_inv); });
+  const quadRows = Object.keys(byC).map(c=>{
+    const s = mean(byC[c].s), p = mean(byC[c].p);
+    let q;
+    if(s>=5.5 && p>=5.5) q='big_profitable';
+    else if(s>=5.5) q='big_low_profit';
+    else if(p>=5.5) q='small_efficient';
+    else q='small_low_profit';
+    return {company:c, size_rank_inv:s, profitability_rank_inv:p, quadrant:q};
+  });
+
+  // win rate
+  const wins = {}, elig = {};
+  compRows.forEach(r=>{ elig[r.company] = (elig[r.company]||new Set()); elig[r.company].add(r.year); if(r.composite_rank===1){ wins[r.company]=(wins[r.company]||0)+1; } });
+  const winRate = {};
+  Object.keys(elig).forEach(c=>{ winRate[c] = (wins[c]||0)/elig[c].size; });
+
+  const numCompanies = activeCompanies().length;
+  const yFrom = state.yFrom, yTo = state.yTo;
+  let topCompany = '—', topRate=-1;
+  Object.entries(winRate).forEach(([c,v])=>{ if(v>topRate){topRate=v;topCompany=c;} });
+  const pctPositive = (()=>{ const vals = growthRows.map(r=>r.real_growth_pct).filter(v=>v!==null&&v!==undefined); if(!vals.length) return null; return 100*vals.filter(v=>v>0).length/vals.length; })();
+
+  const legend = Object.entries(QUADRANT_META).map(([k,m])=>`<span><span class="dot" style="background:${m.color}"></span>${m.label}</span>`).join('');
+
+  return `
+  <div class="grid cols-4" style="margin-bottom:18px;">
+    <div class="panel kpi"><div class="label">Companies in view</div><div class="value">${numCompanies}</div><div class="note">of ${RAW.companies.length} in dataset</div></div>
+    <div class="panel kpi"><div class="label">Years covered</div><div class="value">${yFrom}–${yTo}</div><div class="note">full range ${RAW.years[0]}–${RAW.years[RAW.years.length-1]}</div></div>
+    <div class="panel kpi"><div class="label">Most consistent winner</div><div class="value accent">${topCompany}</div><div class="note">${topRate>=0?fmtPct(topRate*100,0):'—'} of eligible years ranked #1</div></div>
+    <div class="panel kpi"><div class="label">Real growth positive</div><div class="value">${pctPositive!==null?fmtPct(pctPositive,0):'—'}</div><div class="note">of company-years beat inflation</div></div>
+  </div>
+  <div class="grid cols-2">
+    <div class="panel">
+      <h2>Size vs. profitability</h2>
+      <p class="sub">Average rank position, all years in view · lower-left quadrant lines mark the median</p>
+      ${quadrantScatter(quadRows)}
+      <div class="legend">${legend}</div>
+    </div>
+    <div class="panel">
+      <h2>Composite win rate</h2>
+      <p class="sub">Share of eligible years each company ranked #1 on the combined ROE / ROA / cash-quality score</p>
+      ${hBarChart({data:winRate, colorFn:()=>COLORS.gold, valueFmt:(v)=>fmtPct(v*100,0)})}
+    </div>
+  </div>`;
+}
+
+function renderGrowth(){
+  const yoyRows = filterRows(RAW.yoy);
+  const growthRows = filterRows(RAW.growth);
+  const avgYoy = groupAvg(yoyRows, 'yoy_growth');
+  const avgNominal = groupAvg(growthRows, 'nominal_growth_pct');
+  const avgReal = groupAvg(growthRows, 'real_growth_pct');
+  const companies = Object.keys(avgNominal).sort((a,b)=> (avgReal[b]||0)-(avgReal[a]||0));
+
+  let dualBars = '';
+  const width=680, barH=16, gap=22, groupGap=8;
+  const vals = companies.flatMap(c=>[avgNominal[c]||0, avgReal[c]||0]);
+  const min = Math.min(0,...vals), max = Math.max(0,...vals);
+  const labelW=56, padR=70, plotW = width-labelW-padR;
+  const zeroX = labelW + (0-min)/(max-min||1)*plotW;
+  let y=8; let svgRows='';
+  companies.forEach(c=>{
+    [['Nominal',avgNominal[c],COLORS.blue],['Real',avgReal[c],COLORS.gold]].forEach(([label,val,color])=>{
+      val = val||0;
+      const x1 = labelW+(Math.min(0,val)-min)/(max-min||1)*plotW;
+      const x2 = labelW+(Math.max(0,val)-min)/(max-min||1)*plotW;
+      const textX = val>=0? x2+6:x1-6; const anchor = val>=0?'start':'end';
+      svgRows += `<rect x="${x1}" y="${y}" width="${Math.max(1,x2-x1)}" height="${barH}" fill="${color}" rx="1"/>`;
+      svgRows += `<text x="${textX}" y="${y+barH/2+4}" text-anchor="${anchor}" class="barval">${fmtNum(val,1)}%</text>`;
+      y+=barH+3;
+    });
+    svgRows += `<text x="${labelW-8}" y="${y-((barH+3)*2)/2+4}" text-anchor="end" class="barlabel">${c}</text>`;
+    y += groupGap;
+  });
+  const h = y+6;
+  dualBars = `<svg viewBox="0 0 ${width} ${h}" width="100%" height="${h}"><line x1="${zeroX}" y1="0" x2="${zeroX}" y2="${h}" stroke="${COLORS.dim}" stroke-dasharray="2,3"/>${svgRows}</svg>`;
+
+  return `
+  <div class="grid cols-2">
+    <div class="panel">
+      <h2>Average YoY revenue growth</h2>
+      <p class="sub">Simple average of year-over-year revenue growth, by company</p>
+      ${hBarChart({data:avgYoy, colorFn:(v)=>v>=0?COLORS.teal:COLORS.red, valueFmt:(v)=>fmtNum(v,1), unit:'%', zeroLine:true})}
+    </div>
+    <div class="panel">
+      <h2>Nominal vs. real growth</h2>
+      <p class="sub">Blue = as reported · gold = after subtracting that year's U.S. inflation</p>
+      ${dualBars}
+      <div class="legend"><span><span class="dot" style="background:${COLORS.blue}"></span>Nominal</span><span><span class="dot" style="background:${COLORS.gold}"></span>Real (inflation-adjusted)</span></div>
+    </div>
+  </div>
+  <div class="panel textcol" style="margin-top:18px;">
+    <h3>Reading these two charts</h3>
+    <p><strong>Nominal growth</strong> is revenue growth exactly as reported — no adjustments. <strong>Real growth</strong> subtracts that year's U.S. inflation rate, isolating how much of the reported growth reflects the business actually expanding versus prices across the economy simply rising. The wider the gap between a company's nominal and real bar, the more inflation was doing the work behind an otherwise impressive-looking growth number.</p>
+  </div>`;
+}
+
+function renderReturns(){
+  const effRows = filterRows(RAW.eff);
+  const gapRows = filterRows(RAW.gap);
+  const effPivot = pivot(effRows, 'avg_rank');
+  const avgGap = groupAvg(gapRows, 'rank_gap');
+  return `
+  <div class="panel" style="margin-bottom:18px;">
+    <h2>Average rank — ROE, ROA &amp; ROI combined</h2>
+    <p class="sub">Rank 1 = best that year across all three return measures · lower (teal) is stronger, higher (red) is weaker</p>
+    ${heatmapTable({pivotData:effPivot, years:RAW.years.filter(inYearRange), goodDirection:'low', digits:2})}
+  </div>
+  <div class="panel">
+    <h2>Where ROE and ROA ranks disagree</h2>
+    <p class="sub">Positive (teal) = ROA rank beats ROE rank, real strength without leverage · negative (red) = ROE looks better than ROA, often a debt effect</p>
+    ${hBarChart({data:avgGap, colorFn:(v)=>v>=0?COLORS.teal:COLORS.red, zeroLine:true, valueFmt:(v)=>fmtNum(v,2)})}
+  </div>
+  <div class="panel textcol" style="margin-top:18px;">
+    <h3>Why compare ROE to ROA</h3>
+    <p>ROE measures return relative to equity; ROA measures return relative to <em>all</em> assets, debt included. A company can inflate its ROE by borrowing more without truly becoming more efficient — comparing the two ranks surfaces that gap directly.</p>
+  </div>`;
+}
+
+function renderLeverage(){
+  const debtRows = filterRows(RAW.debt);
+  const eqRows = filterRows(RAW.eq);
+  const debtPivot = pivot(debtRows, 'debt_equity');
+  const avgCfNi = groupAvg(eqRows, 'cf_to_ni_ratio');
+  const parityBar = {};
+  Object.entries(avgCfNi).forEach(([c,v])=>{ if(v!==null) parityBar[c]=v; });
+
+  return `
+  <div class="panel" style="margin-bottom:18px;">
+    <h2>Debt / equity ratio</h2>
+    <p class="sub">Centered at zero · blue-leaning = conservative leverage, red-leaning = high leverage. Negative values mean liabilities exceed assets (negative equity).</p>
+    ${heatmapTable({pivotData:debtPivot, years:RAW.years.filter(inYearRange), goodDirection:'low', center:0, digits:2})}
+  </div>
+  <div class="panel">
+    <h2>Cash flow vs. net income — distance from 1.0x parity</h2>
+    <p class="sub">Average operating cash flow ÷ net income, shown as distance above parity (1.0x = cash exactly matches reported profit)</p>
+    ${divergingBar(parityBar, 1, 620, 22, 8, 'x')}
+  </div>
+  <div class="panel textcol" style="margin-top:18px;">
+    <h3>Reading these two measures</h3>
+    <p><strong>Debt/Equity</strong> shows reliance on borrowed money versus a company's own capital. <strong>Cash flow vs. net income</strong> asks whether reported profit is actually backed by cash — a ratio above 1.0x is generally a marker of higher-quality earnings, though an unusually high one can also reflect heavy non-cash add-backs rather than genuinely stronger operations.</p>
+    <p>Note: this ratio is a weaker signal for banks, whose cash flow is driven by trading and financing activity rather than ordinary operations. Negative debt/equity values (liabilities exceeding assets) can come from very different situations — a company in real financial distress, or a healthy company that borrowed to fund share buybacks — so they're worth investigating individually rather than reading as a single signal.</p>
+  </div>`;
+}
+
+function renderMargins(){
+  const ebitdaRows = filterRows(RAW.ebitda);
+  const valRows = filterRows(RAW.val);
+  const compRows = filterRows(RAW.comp);
+  const ebitdaPivot = pivot(ebitdaRows, 'ebitda_margin');
+  const avgValRank = groupAvg(valRows, 'valuation_rank');
+  const valSummary = {};
+  const byC = {};
+  valRows.forEach(r=>{ (byC[r.company]=byC[r.company]||[]).push(r.market_cap_to_ni); });
+  Object.keys(byC).forEach(c=>{
+    const arr = byC[c].filter(v=>v!==null&&v!==undefined).sort((a,b)=>a-b);
+    if(!arr.length) return;
+    const m = mean(arr);
+    const med = arr.length%2? arr[(arr.length-1)/2] : (arr[arr.length/2-1]+arr[arr.length/2])/2;
+    const variance = mean(arr.map(v=>(v-m)**2));
+    valSummary[c] = {mean:m, median:med, std:Math.sqrt(variance)};
+  });
+
+  const wins = {}, elig = {};
+  compRows.forEach(r=>{ elig[r.company]=(elig[r.company]||new Set()); elig[r.company].add(r.year); if(r.composite_rank===1) wins[r.company]=(wins[r.company]||0)+1; });
+
+  const diagRows = Object.keys(elig).sort((a,b)=>{
+    const ra=(wins[a]||0)/elig[a].size, rb=(wins[b]||0)/elig[b].size; return rb-ra;
+  }).map(c=>{
+    const w = wins[c]||0, e = elig[c].size, wr = w/e;
+    const vs = valSummary[c] || {mean:null,median:null,std:null};
+    return `<tr><td>${c}</td><td>${vs.mean!==null?fmtNum(vs.mean,2):'—'}</td><td>${vs.median!==null?fmtNum(vs.median,2):'—'}</td><td>${vs.std!==null?fmtNum(vs.std,2):'—'}</td><td>${w}</td><td>${e}</td><td style="color:var(--gold)">${fmtPct(wr*100,0)}</td></tr>`;
+  }).join('');
+
+  const excludedNote = RAW.ebitda_excluded.length
+    ? `<b>Note:</b> ${RAW.ebitda_excluded.join(', ')} excluded from this chart — source data reports EBITDA = 1 for every year, indicating missing data rather than a genuine near-zero margin.`
+    : null;
+
+  return `
+  <div class="panel" style="margin-bottom:18px;">
+    <h2>EBITDA margin</h2>
+    <p class="sub">Share of revenue converted to EBITDA · teal = strong conversion, red = weak</p>
+    ${heatmapTable({pivotData:ebitdaPivot, years:RAW.years.filter(inYearRange), goodDirection:'high', digits:1, excludedNote})}
+  </div>
+  <div class="grid cols-2">
+    <div class="panel">
+      <h2>Relative valuation rank</h2>
+      <p class="sub">Rank 1 = market prices this company richest relative to earnings that year, all years averaged</p>
+      ${hBarChart({data:avgValRank, colorFn:()=>COLORS.blue, valueFmt:(v)=>fmtNum(v,1)})}
+    </div>
+    <div class="panel">
+      <h2>Supporting detail</h2>
+      <p class="sub">Valuation spread (Market Cap ÷ Net Income) and composite score win-rate ingredients</p>
+      <div style="overflow-x:auto;">
+      <table class="diag">
+        <thead><tr><th style="text-align:left;">Company</th><th>Mean</th><th>Median</th><th>StdDev</th><th>Wins</th><th>Elig. yrs</th><th>Win rate</th></tr></thead>
+        <tbody>${diagRows}</tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+  <div class="panel textcol" style="margin-top:18px;">
+    <h3>Why rank instead of the raw ratio</h3>
+    <p>Market Cap ÷ Net Income can spike into the hundreds when a company's net income is small in a given year — the Mean vs. Median columns above show how far apart those can drift for the same company. Using each year's <em>rank</em> instead keeps a single extreme year from distorting the multi-year picture.</p>
+  </div>`;
+}
+
+// ================= APP SHELL =================
+
+const PAGES = [
+  {id:'overview', label:'Overview', render:renderOverview},
+  {id:'growth', label:'Growth', render:renderGrowth},
+  {id:'returns', label:'Returns & Efficiency', render:renderReturns},
+  {id:'leverage', label:'Leverage & Quality', render:renderLeverage},
+  {id:'margins', label:'Margins & Valuation', render:renderMargins},
+];
+
+function companyChips(){
+  return RAW.companies.map(c=>{
+    const on = state.companies.has(c);
+    return `<span class="chip ${on?'on':''}" data-company="${c}">${c}</span>`;
+  }).join('');
+}
+
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <header class="masthead">
+      <div>
+        <h1><span class="rule"></span>Ledger &amp; Line</h1>
+        <p>A twelve-company financial review, ${RAW.years[0]}–${RAW.years[RAW.years.length-1]} — built from the same measures validated in the companion Power BI report.</p>
+      </div>
+      <div class="meta">SOURCE · Kaggle: Financial Statements of Major Companies<br>COVERAGE · <b>${RAW.companies.length}</b> companies · <b>${RAW.years.length}</b> fiscal years<br>ALL FIGURES IN REPORTED USD UNLESS NOTED</div>
+    </header>
+    <nav class="tabs">
+      ${PAGES.map(p=>`<button data-page="${p.id}" class="${state.page===p.id?'active':''}">${p.label}</button>`).join('')}
+    </nav>
+    <div class="filterbar">
+      <div class="filtergroup">
+        <span class="flabel">Company</span>
+        <span class="chip all" id="chip-all">ALL</span>
+        <span class="chip all" id="chip-none">NONE</span>
+        ${companyChips()}
+      </div>
+      <div class="filtergroup">
+        <span class="flabel">Years</span>
+        <select class="yearsel" id="yfrom"></select>
+        <span style="color:var(--text-faint)">–</span>
+        <select class="yearsel" id="yto"></select>
+      </div>
+      <div class="filter-hint">${activeCompanies().length} of ${RAW.companies.length} companies · ${state.yFrom}–${state.yTo}</div>
+    </div>
+    <div class="pages">
+      ${PAGES.map(p=>`<div class="page ${state.page===p.id?'active':''}" id="page-${p.id}"></div>`).join('')}
+    </div>
+    <div class="footer">
+      <span>LEDGER &amp; LINE — mock analytical review, not investment advice</span>
+      <span>Generated from exported CSVs · matches Power BI companion report</span>
+    </div>
+  `;
+
+  const yFromSel = document.getElementById('yfrom');
+  const yToSel = document.getElementById('yto');
+  RAW.years.forEach(y=>{
+    yFromSel.innerHTML += `<option value="${y}" ${y===state.yFrom?'selected':''}>${y}</option>`;
+    yToSel.innerHTML += `<option value="${y}" ${y===state.yTo?'selected':''}>${y}</option>`;
+  });
+
+  document.getElementById(`page-${state.page}`).innerHTML = PAGES.find(p=>p.id===state.page).render();
+
+  // events
+  app.querySelectorAll('nav.tabs button').forEach(b=>{
+    b.addEventListener('click', ()=>{ state.page = b.dataset.page; render(); });
+  });
+  app.querySelectorAll('.chip[data-company]').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      const c = chip.dataset.company;
+      if(state.companies.has(c)) state.companies.delete(c); else state.companies.add(c);
+      renderCurrentPageOnly();
+      updateChipsAndHint();
+    });
+  });
+  document.getElementById('chip-all').addEventListener('click', ()=>{ state.companies = new Set(RAW.companies); renderCurrentPageOnly(); updateChipsAndHint(); });
+  document.getElementById('chip-none').addEventListener('click', ()=>{ state.companies = new Set(); renderCurrentPageOnly(); updateChipsAndHint(); });
+  yFromSel.addEventListener('change', ()=>{ state.yFrom = parseInt(yFromSel.value); if(state.yFrom>state.yTo) state.yTo=state.yFrom; renderCurrentPageOnly(); updateChipsAndHint(); });
+  yToSel.addEventListener('change', ()=>{ state.yTo = parseInt(yToSel.value); if(state.yTo<state.yFrom) state.yFrom=state.yTo; renderCurrentPageOnly(); updateChipsAndHint(); });
+}
+
+function renderCurrentPageOnly(){
+  document.getElementById(`page-${state.page}`).innerHTML = PAGES.find(p=>p.id===state.page).render();
+}
+function updateChipsAndHint(){
+  document.querySelectorAll('.chip[data-company]').forEach(chip=>{
+    chip.classList.toggle('on', state.companies.has(chip.dataset.company));
+  });
+  document.querySelector('.filter-hint').textContent = `${activeCompanies().length} of ${RAW.companies.length} companies · ${state.yFrom}–${state.yTo}`;
+}
+
+render();
+</script>
+</body>
+</html>
