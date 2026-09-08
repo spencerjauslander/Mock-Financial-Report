@@ -61,7 +61,11 @@ Model setup notes: two dimension tables (`Dim_Company`, `Dim_Year`) relate to ev
 
 ## 4. Bespoke Apps
 
-**Ledger & Line** (`webapp/index.html`) — a standalone, single-file web app rebuilding all five Power BI pages as a self-contained HTML/JS app. No install, no server, no Power BI license required — open the file directly in any browser.
+**Ledger & Line** (`index.html`, repo root) — a standalone, single-file web app rebuilding all five Power BI pages as a self-contained HTML/JS app. No install, no server, no Power BI license required — open the file directly in any browser.
+
+**Live version:** [spencerjauslander.github.io/Mock-Financial-Report](https://spencerjauslander.github.io/Mock-Financial-Report/)
+
+
 
 Differences from the Power BI version:
 - Company and Year filters are fully live: since the app embeds row-level data rather than pre-aggregated numbers, every chart, heatmap, and ranking recalculates on the fly as filters change, rather than just hiding pre-computed figures
@@ -82,7 +86,7 @@ Differences from the Power BI version:
 
 - **Notebook:** requires `pandas`, `numpy`, `matplotlib`, `sqlalchemy`, `kagglehub`. Running top to bottom re-downloads the source dataset and regenerates every CSV in `data/exports/`.
 - **Power BI:** open `powerbi/Mock_Financial_Project.pbix` in Power BI Desktop (free). Data source is `data/exports/*.csv` — reconnect under Transform Data if that folder moves.
-- **Web app:** open `webapp/index.html` directly in any browser.
+- **Web app:** open `index.html` (repo root) directly in any browser, or visit the live version linked above.
 
 ## License / use
 
